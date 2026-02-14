@@ -1,0 +1,139 @@
+const Announcement = require('../models/Announcement');
+const User = require('../models/User');
+const ErrorResponse = require('../utils/errorResponse');
+const sendEmail = require('../utils/emailService');
+
+const resolveAudienceFilter = (user) => {
+  if (!user) return {};
+
+  const roles = ['all', user.role];
+  const woredaFilter = user.woreda ? { woreda: user.woreda } : {};
+
+  return {
+    audienceRoles: { $in: roles },
+    ...woredaFilter
+  };
+};
+
+// @desc    Get announcements
+// @route   GET /api/announcements
+// @access  Private
+exports.getAnnouncements = async (req, res, next) => {
+  try {
+    const filter = resolveAudienceFilter(req.user);
+
+    const announcements = await Announcement.find(filter)
+      .populate('createdBy', 'fullName role')
+      .sort('-createdAt');
+
+    res.status(200).json({
+      success: true,
+      count: announcements.length,
+      data: announcements
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Create announcement
+// @route   POST /api/announcements
+// @access  Private (Officer/Admin)
+exports.createAnnouncement = async (req, res, next) => {
+  try {
+    const { title, message, category, audienceRoles, woreda } = req.body;
+
+    if (!title || !message) {
+      return next(new ErrorResponse('Please fill in all required fields', 400));
+    }
+
+    if (!['officer', 'woreda_admin', 'subcity_admin'].includes(req.user.role)) {
+      return next(new ErrorResponse('Not authorized', 403));
+    }
+
+    const normalizedRoles = Array.isArray(audienceRoles)
+      ? audienceRoles
+      : typeof audienceRoles === 'string'
+        ? audienceRoles.split(',')
+        : ['all'];
+
+    const announcement = await Announcement.create({
+      title,
+      message,
+      category: category || 'General',
+      audienceRoles: normalizedRoles.length ? normalizedRoles : ['all'],
+      woreda: req.user.role === 'woreda_admin' ? req.user.woreda : woreda,
+      createdBy: req.user.id
+    });
+
+    const recipientFilter = {
+      role: { $in: normalizedRoles.includes('all') ? ['resident', 'officer', 'woreda_admin', 'subcity_admin'] : normalizedRoles }
+    };
+
+    if (announcement.woreda) {
+      recipientFilter.woreda = announcement.woreda;
+    }
+
+    const recipients = await User.find(recipientFilter).select('email');
+
+    const io = req.app.get('io');
+
+    await Promise.all(
+      recipients.map(async (recipient) => {
+        if (recipient.email) {
+          const emailBody = `
+            <h2>${announcement.title}</h2>
+            <p>${announcement.message}</p>
+            <p><strong>Category:</strong> ${announcement.category}</p>
+          `;
+          await sendEmail({
+            email: recipient.email,
+            subject: `Announcement: ${announcement.title}`,
+            html: emailBody
+          });
+        }
+
+        if (io) {
+          io.to(`user-${recipient._id.toString()}`).emit('notification', {
+            type: 'announcement',
+            message: announcement.title,
+            announcementId: announcement._id
+          });
+        }
+      })
+    );
+
+    res.status(201).json({
+      success: true,
+      data: announcement
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Delete announcement
+// @route   DELETE /api/announcements/:id
+// @access  Private (Officer/Admin)
+exports.deleteAnnouncement = async (req, res, next) => {
+  try {
+    const announcement = await Announcement.findById(req.params.id);
+
+    if (!announcement) {
+      return next(new ErrorResponse('Announcement not found', 404));
+    }
+
+    if (!['officer', 'woreda_admin', 'subcity_admin'].includes(req.user.role)) {
+      return next(new ErrorResponse('Not authorized', 403));
+    }
+
+    await announcement.remove();
+
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+  } catch (err) {
+    next(err);
+  }
+};

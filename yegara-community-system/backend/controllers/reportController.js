@@ -1,0 +1,398 @@
+const Report = require('../models/Report');
+const User = require('../models/User');
+const ErrorResponse = require('../utils/errorResponse');
+const sendEmail = require('../utils/emailService');
+
+// @desc    Get all reports
+// @route   GET /api/reports
+// @access  Private
+exports.getReports = async (req, res, next) => {
+  try {
+    let query;
+    const reqQuery = { ...req.query };
+    
+    // Fields to exclude
+    const removeFields = ['select', 'sort', 'page', 'limit'];
+    removeFields.forEach(param => delete reqQuery[param]);
+    
+    let queryStr = JSON.stringify(reqQuery);
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+    
+    query = Report.find(JSON.parse(queryStr)).populate('residentId', 'fullName email');
+    
+    // Select fields
+    if (req.query.select) {
+      const fields = req.query.select.split(',').join(' ');
+      query = query.select(fields);
+    }
+    
+    // Sort
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort('-createdAt');
+    }
+    
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const total = await Report.countDocuments(JSON.parse(queryStr));
+    
+    query = query.skip(startIndex).limit(limit);
+    
+    // Execute query
+    const reports = await query;
+    
+    // Pagination result
+    const pagination = {};
+    
+    if (endIndex < total) {
+      pagination.next = {
+        page: page + 1,
+        limit
+      };
+    }
+    
+    if (startIndex > 0) {
+      pagination.prev = {
+        page: page - 1,
+        limit
+      };
+    }
+    
+    res.status(200).json({
+      success: true,
+      count: reports.length,
+      pagination,
+      data: reports
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get single report
+// @route   GET /api/reports/:id
+// @access  Private
+exports.getReport = async (req, res, next) => {
+  try {
+    const report = await Report.findById(req.params.id)
+      .populate('residentId', 'fullName email phone')
+      .populate('assignedOfficer', 'fullName email')
+      .populate('updates.updatedBy', 'fullName role');
+    
+    if (!report) {
+      return next(new ErrorResponse('Report not found', 404));
+    }
+    
+    // Check if user is authorized to view this report
+    if (req.user.role === 'resident' && report.residentId._id.toString() !== req.user.id) {
+      return next(new ErrorResponse('Not authorized to access this report', 403));
+    }
+    
+    if (req.user.role === 'officer' && report.department !== req.user.department) {
+      return next(new ErrorResponse('Not authorized to access this report', 403));
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: report
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Create new report
+// @route   POST /api/reports
+// @access  Private
+exports.createReport = async (req, res, next) => {
+  try {
+    // Add resident to req.body
+    req.body.residentId = req.user.id;
+    req.body.woreda = req.user.woreda;
+    
+    // Auto-assign department based on category
+    const departmentMapping = {
+      'Water': 'Water',
+      'Road': 'Road',
+      'Sanitation': 'Sanitation',
+      'Electricity': 'Electricity',
+      'Health': 'Health',
+      'Other': 'Other'
+    };
+    
+    req.body.department = departmentMapping[req.body.category] || 'Other';
+    
+    // Handle file uploads
+    if (req.files && req.files.images) {
+      req.body.images = req.files.images.map(file => file.path);
+    }
+
+    if (req.body.location && typeof req.body.location === 'string') {
+      req.body.location = {
+        address: req.body.location
+      };
+    }
+    
+    const report = await Report.create(req.body);
+    
+    // Send notification to department officers
+    const officers = await User.find({
+      role: 'officer',
+      department: report.department,
+      woreda: report.woreda,
+      isActive: true
+    });
+    
+    if (officers.length > 0) {
+      const message = `
+        <h2>New Report Submitted</h2>
+        <p>A new report has been submitted in your department (${report.department}).</p>
+        <p><strong>Title:</strong> ${report.title}</p>
+        <p><strong>Category:</strong> ${report.category}</p>
+        <p><strong>Description:</strong> ${report.description.substring(0, 100)}...</p>
+        <p><a href="${process.env.FRONTEND_URL}/officer/reports/${report._id}">View Report</a></p>
+      `;
+      
+      officers.forEach(async (officer) => {
+        await sendEmail({
+          email: officer.email,
+          subject: `New ${report.category} Report - Yegara System`,
+          html: message
+        });
+      });
+    }
+    
+    res.status(201).json({
+      success: true,
+      data: report
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Update report
+// @route   PUT /api/reports/:id
+// @access  Private
+exports.updateReport = async (req, res, next) => {
+  try {
+    let report = await Report.findById(req.params.id);
+    
+    if (!report) {
+      return next(new ErrorResponse('Report not found', 404));
+    }
+    
+    // Check authorization
+    if (req.user.role === 'resident' && report.residentId.toString() !== req.user.id) {
+      return next(new ErrorResponse('Not authorized to update this report', 403));
+    }
+    
+    // Officers can only update reports in their department
+    if (req.user.role === 'officer') {
+      if (report.department !== req.user.department) {
+        return next(new ErrorResponse('Not authorized to update this report', 403));
+      }
+      
+      // Officers can only update status and add updates
+      const allowedUpdates = ['status', 'updates', 'assignedOfficer'];
+      Object.keys(req.body).forEach(key => {
+        if (!allowedUpdates.includes(key)) {
+          delete req.body[key];
+        }
+      });
+    }
+    
+    // Add update history if status is changing
+    if (req.body.status && req.body.status !== report.status) {
+      if (!req.body.updates) req.body.updates = [];
+      
+      req.body.updates.push({
+        status: req.body.status,
+        message: req.body.updateMessage || `Status changed to ${req.body.status}`,
+        updatedBy: req.user.id
+      });
+      
+      // Set resolvedAt if status is 'Resolved'
+      if (req.body.status === 'Resolved') {
+        req.body.resolvedAt = new Date();
+      }
+    }
+    
+    // Handle file uploads
+    if (req.files && req.files.images) {
+      const newImages = req.files.images.map(file => file.path);
+      req.body.images = [...report.images, ...newImages];
+    }
+    
+    report = await Report.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+    
+    // Send notification to resident if status changed
+    if (req.body.status && req.body.status !== report.status) {
+      const resident = await User.findById(report.residentId);
+      
+      if (resident) {
+        const message = `
+          <h2>Report Status Updated</h2>
+          <p>Your report "${report.title}" status has been updated to <strong>${report.status}</strong>.</p>
+          <p><a href="${process.env.FRONTEND_URL}/resident/reports/${report._id}">View Details</a></p>
+        `;
+        
+        await sendEmail({
+          email: resident.email,
+          subject: `Report Status Updated - ${report.title}`,
+          html: message
+        });
+      }
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: report
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Delete report
+// @route   DELETE /api/reports/:id
+// @access  Private
+exports.deleteReport = async (req, res, next) => {
+  try {
+    const report = await Report.findById(req.params.id);
+    
+    if (!report) {
+      return next(new ErrorResponse('Report not found', 404));
+    }
+    
+    // Only admins and report owner can delete
+    if (req.user.role === 'resident' && report.residentId.toString() !== req.user.id) {
+      return next(new ErrorResponse('Not authorized to delete this report', 403));
+    }
+    
+    await report.remove();
+    
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get reports by woreda
+// @route   GET /api/reports/woreda/:woreda
+// @access  Private (Admin)
+exports.getReportsByWoreda = async (req, res, next) => {
+  try {
+    const reports = await Report.find({ woreda: req.params.woreda })
+      .populate('residentId', 'fullName email')
+      .sort('-createdAt');
+    
+    res.status(200).json({
+      success: true,
+      count: reports.length,
+      data: reports
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get reports by department
+// @route   GET /api/reports/department/:department
+// @access  Private (Officer)
+exports.getReportsByDepartment = async (req, res, next) => {
+  try {
+    // Verify officer has access to this department
+    if (req.user.role === 'officer' && req.params.department !== req.user.department) {
+      return next(new ErrorResponse('Not authorized to access this department', 403));
+    }
+    
+    const reports = await Report.find({ department: req.params.department })
+      .populate('residentId', 'fullName email')
+      .sort('-createdAt');
+    
+    res.status(200).json({
+      success: true,
+      count: reports.length,
+      data: reports
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get user's reports
+// @route   GET /api/reports/my-reports
+// @access  Private
+exports.getMyReports = async (req, res, next) => {
+  try {
+    let query;
+    
+    if (req.user.role === 'resident') {
+      query = { residentId: req.user.id };
+    } else if (req.user.role === 'officer') {
+      query = { department: req.user.department };
+    } else if (req.user.role === 'woreda_admin') {
+      query = { woreda: req.user.woreda };
+    }
+    
+    const reports = await Report.find(query)
+      .populate('residentId', 'fullName email')
+      .sort('-createdAt');
+    
+    res.status(200).json({
+      success: true,
+      count: reports.length,
+      data: reports
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Post update to report
+// @route   POST /api/reports/:id/updates
+// @access  Private (Officer)
+exports.postUpdate = async (req, res, next) => {
+  try {
+    const { message } = req.body;
+    
+    const report = await Report.findById(req.params.id);
+    
+    if (!report) {
+      return next(new ErrorResponse('Report not found', 404));
+    }
+    
+    // Check if officer has access to this report
+    if (req.user.role === 'officer' && report.department !== req.user.department) {
+      return next(new ErrorResponse('Not authorized to update this report', 403));
+    }
+    
+    const update = {
+      status: report.status,
+      message,
+      updatedBy: req.user.id
+    };
+    
+    report.updates.push(update);
+    await report.save();
+    
+    res.status(200).json({
+      success: true,
+      data: update
+    });
+  } catch (err) {
+    next(err);
+  }
+};
