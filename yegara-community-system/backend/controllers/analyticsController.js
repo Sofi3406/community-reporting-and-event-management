@@ -112,6 +112,7 @@ exports.getAnalytics = async (req, res, next) => {
           }
         }},
         { $project: {
+          _id: 0,
           woreda: "$_id",
           totalReports: "$total",
           resolvedReports: "$resolved",
@@ -132,6 +133,7 @@ exports.getAnalytics = async (req, res, next) => {
           inProgress: { $sum: { $cond: [{ $eq: ["$status", "In Progress"] }, 1, 0] } }
         }},
         { $project: {
+          _id: 0,
           department: "$_id",
           totalReports: "$total",
           resolvedReports: "$resolved",

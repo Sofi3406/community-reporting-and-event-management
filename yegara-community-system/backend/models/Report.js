@@ -15,6 +15,13 @@ const reportSchema = new mongoose.Schema({
     enum: ['Water', 'Road', 'Sanitation', 'Electricity', 'Health', 'Other'],
     required: true
   },
+  customCategory: {
+    type: String,
+    trim: true,
+    required: function() {
+      return this.category === 'Other';
+    }
+  },
   status: {
     type: String,
     enum: ['Pending', 'In Progress', 'Resolved', 'Rejected'],

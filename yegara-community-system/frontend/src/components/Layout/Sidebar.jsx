@@ -9,7 +9,8 @@ import {
   UserGroupIcon,
   CogIcon,
   DocumentArrowUpIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 
 const ResidentSidebar = ({ onLogout }) => {
@@ -19,7 +20,8 @@ const ResidentSidebar = ({ onLogout }) => {
     { to: '/resident/reports/new', icon: DocumentArrowUpIcon, label: 'New Report' },
     { to: '/events', icon: CalendarIcon, label: 'Events' },
     { to: '/announcements', icon: DocumentTextIcon, label: 'Public Updates' },
-    { to: '/resources', icon: DocumentTextIcon, label: 'Resources' }
+    { to: '/resources', icon: DocumentTextIcon, label: 'Resources' },
+    { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
   return (
@@ -63,7 +65,8 @@ const OfficerSidebar = ({ onLogout }) => {
     { to: '/officer/resources', icon: DocumentArrowUpIcon, label: 'Upload Resources' },
     { to: '/officer/updates', icon: DocumentTextIcon, label: 'Post Updates' },
     { to: '/officer/announcements', icon: DocumentTextIcon, label: 'Announcements' },
-    { to: '/events', icon: CalendarIcon, label: 'Events' }
+    { to: '/events', icon: CalendarIcon, label: 'Events' },
+    { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
   return (
@@ -111,7 +114,8 @@ const WoredaAdminSidebar = ({ onLogout }) => {
     { to: '/woreda-admin/events', icon: CalendarIcon, label: 'Manage Events' },
     { to: '/woreda-admin/meetings', icon: CalendarIcon, label: 'Virtual Meetings' },
     { to: '/woreda-admin/announcements', icon: DocumentTextIcon, label: 'Announcements' },
-    { to: '/woreda-admin/analytics', icon: ChartBarIcon, label: 'Analytics' }
+    { to: '/woreda-admin/analytics', icon: ChartBarIcon, label: 'Analytics' },
+    { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
   return (
@@ -160,7 +164,8 @@ const SubCityAdminSidebar = ({ onLogout }) => {
     { to: '/subcity-admin/users', icon: UserGroupIcon, label: 'User Management' },
     { to: '/subcity-admin/announcements', icon: DocumentTextIcon, label: 'Announcements' },
     { to: '/subcity-admin/system', icon: CogIcon, label: 'System Settings' },
-    { to: '/subcity-admin/export', icon: DocumentArrowUpIcon, label: 'Export Data' }
+    { to: '/subcity-admin/export', icon: DocumentArrowUpIcon, label: 'Export Data' },
+    { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
   return (

@@ -7,6 +7,13 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  const roleLabels = {
+    resident: 'Resident',
+    officer: 'Officer',
+    woreda_admin: 'Woreda Admin',
+    subcity_admin: 'Sub-City Admin'
+  };
+
   const profileForm = useForm({
     defaultValues: {
       fullName: user?.fullName || '',
@@ -49,17 +56,51 @@ const Profile = () => {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold text-gray-900">Profile</h1>
-        <p className="text-gray-600 mt-2">Manage your personal information and security.</p>
+      <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-700 font-semibold">Profile</p>
+            <h1 className="mt-3 text-3xl md:text-4xl font-display text-slate-900">Manage your account</h1>
+            <p className="mt-2 text-slate-600">Update your personal details and secure your account.</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl font-semibold">
+              {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-slate-900">{user?.fullName || 'User'}</p>
+              <p className="text-sm text-slate-600">{user?.email || 'No email on file'}</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-white/80 border border-slate-200 rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400">Role</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {roleLabels[user?.role] || 'Member'}
+            </p>
+          </div>
+          <div className="bg-white/80 border border-slate-200 rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400">Woreda</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {user?.woreda || 'Not set'}
+            </p>
+          </div>
+          <div className="bg-white/80 border border-slate-200 rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400">Department</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {user?.department || 'Not assigned'}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Personal details</h2>
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Personal details</h2>
           <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full name</label>
+              <label className="block text-sm font-medium text-slate-700">Full name</label>
               <input
                 className="input mt-1"
                 {...profileForm.register('fullName', { required: 'Full name is required' })}
@@ -72,7 +113,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <label className="block text-sm font-medium text-slate-700">Email</label>
               <input
                 type="email"
                 className="input mt-1"
@@ -86,7 +127,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Phone</label>
+              <label className="block text-sm font-medium text-slate-700">Phone</label>
               <input
                 type="tel"
                 className="input mt-1"
@@ -96,7 +137,7 @@ const Profile = () => {
 
             <button
               type="submit"
-              className="btn btn-primary w-full"
+              className="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 disabled:opacity-60"
               disabled={isSaving}
             >
               {isSaving ? 'Saving...' : 'Save changes'}
@@ -104,11 +145,11 @@ const Profile = () => {
           </form>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Change password</h2>
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Change password</h2>
           <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Current password</label>
+              <label className="block text-sm font-medium text-slate-700">Current password</label>
               <input
                 type="password"
                 className="input mt-1"
@@ -122,7 +163,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">New password</label>
+              <label className="block text-sm font-medium text-slate-700">New password</label>
               <input
                 type="password"
                 className="input mt-1"
@@ -139,7 +180,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Confirm new password</label>
+              <label className="block text-sm font-medium text-slate-700">Confirm new password</label>
               <input
                 type="password"
                 className="input mt-1"
@@ -154,7 +195,7 @@ const Profile = () => {
 
             <button
               type="submit"
-              className="btn btn-primary w-full"
+              className="w-full bg-amber-500 text-slate-900 py-3 rounded-xl font-semibold hover:bg-amber-400 disabled:opacity-60"
               disabled={isChangingPassword}
             >
               {isChangingPassword ? 'Updating...' : 'Update password'}

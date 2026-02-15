@@ -3,6 +3,12 @@ const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const sendEmail = require('../utils/emailService');
 
+const normalizeWoreda = (value) =>
+  (value || '')
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
 // @desc    Get all reports
 // @route   GET /api/reports
 // @access  Private
@@ -115,6 +121,14 @@ exports.createReport = async (req, res, next) => {
     req.body.residentId = req.user.id;
     req.body.woreda = req.user.woreda;
     
+    if (req.body.category === 'Other' && (!req.body.customCategory || !req.body.customCategory.trim())) {
+      return next(new ErrorResponse('Please provide the category type', 400));
+    }
+
+    if (req.body.customCategory) {
+      req.body.customCategory = req.body.customCategory.trim();
+    }
+
     // Auto-assign department based on category
     const departmentMapping = {
       'Water': 'Water',
@@ -139,14 +153,59 @@ exports.createReport = async (req, res, next) => {
     }
     
     const report = await Report.create(req.body);
+
+    if (report.category === 'Other') {
+      const woredaAdminCandidates = await User.find({
+        role: 'woreda_admin',
+        isActive: true
+      });
+
+      const woredaAdmins = woredaAdminCandidates.filter(
+        (admin) => normalizeWoreda(admin.woreda) === normalizeWoreda(report.woreda)
+      );
+
+      const io = req.app.get('io');
+
+      await Promise.all(
+        woredaAdmins.map(async (admin) => {
+          if (admin.email) {
+            const emailBody = `
+              <h2>New Custom Category Report</h2>
+              <p>A resident submitted a report with a custom category.</p>
+              <p><strong>Woreda:</strong> ${report.woreda}</p>
+              <p><strong>Custom Category:</strong> ${report.customCategory}</p>
+              <p><strong>Title:</strong> ${report.title}</p>
+              <p><a href="${process.env.FRONTEND_URL}/woreda-admin/reports/${report._id}">View Report</a></p>
+            `;
+
+            await sendEmail({
+              email: admin.email,
+              subject: 'Custom Category Report - Yegara',
+              html: emailBody
+            });
+          }
+
+          if (io) {
+            io.to(`user-${admin._id.toString()}`).emit('notification', {
+              type: 'custom_category_report',
+              message: `Custom category report: ${report.customCategory}`,
+              reportId: report._id
+            });
+          }
+        })
+      );
+    }
     
     // Send notification to department officers
-    const officers = await User.find({
+    const officerCandidates = await User.find({
       role: 'officer',
       department: report.department,
-      woreda: report.woreda,
       isActive: true
     });
+
+    const officers = officerCandidates.filter(
+      (officer) => normalizeWoreda(officer.woreda) === normalizeWoreda(report.woreda)
+    );
     
     if (officers.length > 0) {
       const message = `

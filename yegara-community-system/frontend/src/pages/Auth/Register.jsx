@@ -9,6 +9,20 @@ const Register = () => {
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
+  const woredaOptions = [
+    'Woreda 01',
+    'Woreda 02',
+    'Woreda 03',
+    'Woreda 04',
+    'Woreda 05',
+    'Woreda 06',
+    'Woreda 07',
+    'Woreda 08',
+    'Woreda 09',
+    'Woreda 10',
+    'Other'
+  ];
+
   const {
     register,
     handleSubmit,
@@ -20,22 +34,7 @@ const Register = () => {
     }
   });
 
-  const role = watch('role');
-
-  const getDashboardLink = (selectedRole) => {
-    switch (selectedRole) {
-      case 'resident':
-        return '/resident/dashboard';
-      case 'officer':
-        return '/officer/dashboard';
-      case 'woreda_admin':
-        return '/woreda-admin/dashboard';
-      case 'subcity_admin':
-        return '/subcity-admin/dashboard';
-      default:
-        return '/';
-    }
-  };
+  const woredaSelection = watch('woreda');
 
   const onSubmit = async (data) => {
     if (data.password !== data.confirmPassword) {
@@ -48,45 +47,52 @@ const Register = () => {
       email: data.email,
       password: data.password,
       phone: data.phone || undefined,
-      role: data.role,
+      role: 'resident',
       woreda: data.woreda || undefined,
-      department: data.department || undefined
+      customWoredaName: data.customWoredaName || undefined
     };
 
     try {
       await registerUser(payload);
-      navigate(getDashboardLink(data.role));
+      navigate('/resident/dashboard');
     } catch (error) {
       // handled in auth context
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fbf8f2]">
       <Navbar />
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create your account</h1>
-            <p className="mt-3 text-gray-600">
-              Join Yegara to report issues, access local resources, and participate in community events.
+      <div className="max-w-6xl mx-auto px-6 py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-start">
+          <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-8 shadow-sm">
+            <span className="text-xs uppercase tracking-[0.3em] text-amber-700 font-semibold">Resident registration</span>
+            <h1 className="mt-4 text-3xl md:text-4xl font-display text-slate-900">
+              Create your resident account to report issues and follow updates.
+            </h1>
+            <p className="mt-4 text-slate-600">
+              Officers and administrators are onboarded by woreda leadership to keep every account verified.
             </p>
 
-            <div className="mt-6 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">Why register?</h2>
-              <ul className="mt-3 space-y-2 text-gray-600">
-                <li>Track report status in real time</li>
-                <li>Get notified about community events</li>
-                <li>Access official resources by woreda</li>
+            <div className="mt-6 bg-white/80 border border-amber-100 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900">With a resident account you can</h2>
+              <ul className="mt-3 space-y-2 text-slate-600">
+                <li>Submit reports with photos and location details</li>
+                <li>Track status updates and resolution timelines</li>
+                <li>See official resources and upcoming events</li>
               </ul>
+            </div>
+
+            <div className="mt-6 text-sm text-slate-600">
+              Need an officer or admin account? Contact your woreda office to get onboarded.
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full name</label>
+                <label className="block text-sm font-medium text-slate-700">Full name</label>
                 <input
                   type="text"
                   className="input mt-1"
@@ -98,7 +104,7 @@ const Register = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-slate-700">Email</label>
                 <input
                   type="email"
                   className="input mt-1"
@@ -110,7 +116,7 @@ const Register = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Phone (optional)</label>
+                <label className="block text-sm font-medium text-slate-700">Phone (optional)</label>
                 <input
                   type="tel"
                   className="input mt-1"
@@ -118,9 +124,42 @@ const Register = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Woreda</label>
+                <select
+                  className="input mt-1"
+                  {...register('woreda', { required: 'Woreda is required' })}
+                >
+                  <option value="">Select woreda</option>
+                  {woredaOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {errors.woreda && (
+                  <p className="mt-1 text-sm text-red-600">{errors.woreda.message}</p>
+                )}
+              </div>
+
+              {woredaSelection === 'Other' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Woreda name</label>
+                  <input
+                    type="text"
+                    className="input mt-1"
+                    placeholder="Enter your woreda"
+                    {...register('customWoredaName', { required: 'Woreda name is required' })}
+                  />
+                  {errors.customWoredaName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.customWoredaName.message}</p>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <label className="block text-sm font-medium text-slate-700">Password</label>
                   <input
                     type="password"
                     className="input mt-1"
@@ -135,7 +174,7 @@ const Register = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Confirm password</label>
+                  <label className="block text-sm font-medium text-slate-700">Confirm password</label>
                   <input
                     type="password"
                     className="input mt-1"
@@ -147,70 +186,22 @@ const Register = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <select className="input mt-1" {...register('role')}>
-                  <option value="resident">Resident</option>
-                  <option value="officer">Department Officer</option>
-                  <option value="woreda_admin">Woreda Admin</option>
-                  <option value="subcity_admin">Sub-City Admin</option>
-                </select>
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-700">
+                This registration is for residents only. Officers and admins are created by woreda leadership.
               </div>
-
-              {(role === 'resident' || role === 'woreda_admin') && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Woreda</label>
-                  <input
-                    type="text"
-                    className="input mt-1"
-                    placeholder="e.g. Woreda 05"
-                    {...register('woreda', { required: 'Woreda is required' })}
-                  />
-                  {errors.woreda && (
-                    <p className="mt-1 text-sm text-red-600">{errors.woreda.message}</p>
-                  )}
-                </div>
-              )}
-
-              {role === 'officer' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Department</label>
-                  <select
-                    className="input mt-1"
-                    {...register('department', { required: 'Department is required' })}
-                  >
-                    <option value="">Select department</option>
-                    <option value="Water">Water</option>
-                    <option value="Road">Road</option>
-                    <option value="Sanitation">Sanitation</option>
-                    <option value="Electricity">Electricity</option>
-                    <option value="Health">Health</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  {errors.department && (
-                    <p className="mt-1 text-sm text-red-600">{errors.department.message}</p>
-                  )}
-                </div>
-              )}
-
-              {role !== 'resident' && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                  Admin and officer accounts require activation. You will receive an activation email after registration.
-                </div>
-              )}
 
               <button
                 type="submit"
-                className="w-full bg-primary-600 text-white py-3 rounded-lg font-medium hover:bg-primary-700 disabled:opacity-60"
+                className="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 disabled:opacity-60"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Creating account...' : 'Create account'}
               </button>
             </form>
 
-            <p className="mt-5 text-sm text-gray-600">
+            <p className="mt-5 text-sm text-slate-600">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 font-medium hover:text-primary-700">
+              <Link to="/login" className="text-amber-700 font-semibold hover:text-amber-600">
                 Sign in
               </Link>
             </p>

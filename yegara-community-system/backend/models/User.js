@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema({
       return this.role === 'resident' || this.role === 'woreda_admin';
     }
   },
+  customWoredaName: {
+    type: String,
+    trim: true
+  },
   department: {
     type: String,
     enum: ['Water', 'Road', 'Sanitation', 'Electricity', 'Health', 'Other'],

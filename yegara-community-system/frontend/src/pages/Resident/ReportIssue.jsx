@@ -8,9 +8,12 @@ const ReportIssue = () => {
   const {
     register,
     handleSubmit,
+    watch,
     reset,
     formState: { errors }
   } = useForm();
+
+  const categorySelection = watch('category');
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -18,6 +21,9 @@ const ReportIssue = () => {
       const formData = new FormData();
       formData.append('title', data.title);
       formData.append('category', data.category);
+      if (data.customCategory) {
+        formData.append('customCategory', data.customCategory);
+      }
       formData.append('description', data.description);
       formData.append('location', data.location || '');
 
@@ -68,6 +74,23 @@ const ReportIssue = () => {
           </select>
           {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
         </div>
+
+        {categorySelection === 'Other' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Category type</label>
+            <input
+              className="input mt-1"
+              placeholder="Describe the category"
+              {...register('customCategory', {
+                required: 'Category type is required',
+                minLength: { value: 2, message: 'Enter at least 2 characters' }
+              })}
+            />
+            {errors.customCategory && (
+              <p className="mt-1 text-sm text-red-600">{errors.customCategory.message}</p>
+            )}
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Location</label>

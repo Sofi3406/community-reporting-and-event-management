@@ -42,12 +42,21 @@ const sendTokenResponse = (user, statusCode, res, extra = {}) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { email, password, fullName, phone, role, woreda, department } = req.body;
+    const { email, password, fullName, phone, role, woreda, department, customWoredaName } = req.body;
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return next(new ErrorResponse('User already exists', 400));
+    }
+
+    let finalWoreda = woreda;
+
+    if (role === 'resident' && woreda === 'Other') {
+      if (!customWoredaName || !customWoredaName.trim()) {
+        return next(new ErrorResponse('Please provide your woreda name', 400));
+      }
+      finalWoreda = customWoredaName.trim();
     }
 
     // Generate access code for officers
@@ -63,11 +72,44 @@ exports.register = async (req, res, next) => {
       fullName,
       phone,
       role,
-      woreda,
+      woreda: finalWoreda,
       department,
+      customWoredaName: role === 'resident' && woreda === 'Other' ? finalWoreda : undefined,
       accessCode,
       isActive: role === 'resident' ? true : false // Residents are active immediately
     });
+
+    if (role === 'resident' && woreda === 'Other') {
+      const subcityAdmins = await User.find({ role: 'subcity_admin', isActive: true });
+      const io = req.app.get('io');
+
+      await Promise.all(
+        subcityAdmins.map(async (admin) => {
+          if (admin.email) {
+            const emailBody = `
+              <h2>New Woreda Request</h2>
+              <p>A resident registered with a woreda not yet listed.</p>
+              <p><strong>Requested Woreda:</strong> ${finalWoreda}</p>
+              <p><strong>Resident:</strong> ${fullName} (${email})</p>
+            `;
+
+            await sendEmail({
+              email: admin.email,
+              subject: 'New Woreda Request - Yegara',
+              html: emailBody
+            });
+          }
+
+          if (io) {
+            io.to(`user-${admin._id.toString()}`).emit('notification', {
+              type: 'woreda_request',
+              message: `New woreda requested: ${finalWoreda}`,
+              woreda: finalWoreda
+            });
+          }
+        })
+      );
+    }
 
     // Send activation email for officers/admins
     if (role !== 'resident') {
@@ -235,7 +277,7 @@ exports.forgotPassword = async (req, res, next) => {
   await user.save();
 
   // Create reset url
-  const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
   const message = `
     <h2>You have requested a password reset</h2>
