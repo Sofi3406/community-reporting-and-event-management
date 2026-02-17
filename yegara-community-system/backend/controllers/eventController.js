@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const ErrorResponse = require('../utils/errorResponse');
+const { buildWoredaRegex } = require('../utils/woreda');
 
 // @desc    Get all events
 // @route   GET /api/events
@@ -183,7 +184,8 @@ exports.deleteEvent = async (req, res, next) => {
 // @access  Private
 exports.getEventsByWoreda = async (req, res, next) => {
   try {
-    const events = await Event.find({ woreda: req.params.woreda })
+    const woredaRegex = buildWoredaRegex(req.params.woreda);
+    const events = await Event.find(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.params.woreda })
       .populate('organizer', 'fullName email')
       .sort('-createdAt');
 

@@ -10,7 +10,8 @@ const ManageOfficers = () => {
   const [form, setForm] = useState({
     fullName: '',
     email: '',
-    department: ''
+    department: '',
+    customDepartment: ''
   });
 
   const fetchOfficers = async () => {
@@ -32,16 +33,22 @@ const ManageOfficers = () => {
       return;
     }
 
+    if (form.department === 'Other' && !form.customDepartment.trim()) {
+      toast.error('Please enter the custom category for this officer');
+      return;
+    }
+
     try {
       await usersAPI.create({
         fullName: form.fullName,
         email: form.email,
         role: 'officer',
         department: form.department,
+        customDepartment: form.department === 'Other' ? form.customDepartment.trim() : undefined,
         woreda: user?.woreda
       });
       toast.success('Department Officer added successfully');
-      setForm({ fullName: '', email: '', department: '' });
+      setForm({ fullName: '', email: '', department: '', customDepartment: '' });
       fetchOfficers();
     } catch (error) {
       toast.error(error.response?.data?.error || 'Unable to add officer');
@@ -93,7 +100,7 @@ const ManageOfficers = () => {
           <select
             className="input mt-1"
             value={form.department}
-            onChange={(e) => setForm({ ...form, department: e.target.value })}
+            onChange={(e) => setForm({ ...form, department: e.target.value, customDepartment: '' })}
           >
             <option value="">Select department</option>
             <option value="Water">Water</option>
@@ -104,6 +111,17 @@ const ManageOfficers = () => {
             <option value="Other">Other</option>
           </select>
         </div>
+        {form.department === 'Other' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Custom category</label>
+            <input
+              className="input mt-1"
+              placeholder="Use the resident's category"
+              value={form.customDepartment}
+              onChange={(e) => setForm({ ...form, customDepartment: e.target.value })}
+            />
+          </div>
+        )}
         <div className="md:col-span-3">
           <button type="submit" className="btn btn-primary">Add officer</button>
         </div>
@@ -125,6 +143,7 @@ const ManageOfficers = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Custom category</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -134,6 +153,7 @@ const ManageOfficers = () => {
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{officer.fullName}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{officer.email}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{officer.department}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{officer.customDepartment || '-'}</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDelete(officer._id)}

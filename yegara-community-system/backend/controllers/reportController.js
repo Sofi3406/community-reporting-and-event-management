@@ -3,11 +3,7 @@ const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const sendEmail = require('../utils/emailService');
 
-const normalizeWoreda = (value) =>
-  (value || '')
-    .toString()
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
+const { buildWoredaRegex, normalizeWoreda } = require('../utils/woreda');
 
 // @desc    Get all reports
 // @route   GET /api/reports
@@ -155,14 +151,12 @@ exports.createReport = async (req, res, next) => {
     const report = await Report.create(req.body);
 
     if (report.category === 'Other') {
-      const woredaAdminCandidates = await User.find({
+      const woredaRegex = buildWoredaRegex(report.woreda);
+      const woredaAdmins = await User.find({
         role: 'woreda_admin',
-        isActive: true
+        isActive: true,
+        ...(woredaRegex ? { woreda: { $regex: woredaRegex } } : {})
       });
-
-      const woredaAdmins = woredaAdminCandidates.filter(
-        (admin) => normalizeWoreda(admin.woreda) === normalizeWoreda(report.woreda)
-      );
 
       const io = req.app.get('io');
 
@@ -353,7 +347,8 @@ exports.deleteReport = async (req, res, next) => {
 // @access  Private (Admin)
 exports.getReportsByWoreda = async (req, res, next) => {
   try {
-    const reports = await Report.find({ woreda: req.params.woreda })
+    const woredaRegex = buildWoredaRegex(req.params.woreda);
+    const reports = await Report.find(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.params.woreda })
       .populate('residentId', 'fullName email')
       .sort('-createdAt');
     
@@ -403,7 +398,8 @@ exports.getMyReports = async (req, res, next) => {
     } else if (req.user.role === 'officer') {
       query = { department: req.user.department };
     } else if (req.user.role === 'woreda_admin') {
-      query = { woreda: req.user.woreda };
+      const woredaRegex = buildWoredaRegex(req.user.woreda);
+      query = woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.user.woreda };
     }
     
     const reports = await Report.find(query)

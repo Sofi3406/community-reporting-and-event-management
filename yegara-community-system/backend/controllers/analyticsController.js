@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Event = require('../models/Event');
 const Resource = require('../models/Resource');
 const Analytics = require('../models/Analytics');
+const { buildWoredaRegex } = require('../utils/woreda');
 
 // Helper function to get date range
 const getDateRange = (period) => {
@@ -43,7 +44,8 @@ exports.getAnalytics = async (req, res, next) => {
     };
     
     if (woreda && woreda !== 'all') {
-      matchConditions.woreda = woreda;
+      const woredaRegex = buildWoredaRegex(woreda);
+      matchConditions.woreda = woredaRegex ? { $regex: woredaRegex } : woreda;
     }
     
     // Execute all queries in parallel

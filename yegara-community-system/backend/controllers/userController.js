@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const sendEmail = require('../utils/emailService');
+const { buildWoredaRegex, isSameWoreda } = require('../utils/woreda');
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -16,7 +17,8 @@ exports.getUsers = async (req, res, next) => {
     
     // Woreda admins can only see users in their woreda
     if (req.user.role === 'woreda_admin') {
-      query.woreda = req.user.woreda;
+      const woredaRegex = buildWoredaRegex(req.user.woreda);
+      query.woreda = woredaRegex ? { $regex: woredaRegex } : req.user.woreda;
     }
     
     // Filter by role if specified
@@ -58,7 +60,7 @@ exports.getUser = async (req, res, next) => {
     }
     
     // Woreda admin can only see users in their woreda
-    if (req.user.role === 'woreda_admin' && user.woreda !== req.user.woreda) {
+    if (req.user.role === 'woreda_admin' && !isSameWoreda(user.woreda, req.user.woreda)) {
       return next(new ErrorResponse('Not authorized', 403));
     }
     
@@ -90,7 +92,7 @@ exports.createUser = async (req, res, next) => {
     }
     
     // Woreda admins can only create users in their woreda
-    if (req.user.role === 'woreda_admin' && woreda !== req.user.woreda) {
+    if (req.user.role === 'woreda_admin' && !isSameWoreda(woreda, req.user.woreda)) {
       return next(new ErrorResponse('Can only create users in your woreda', 403));
     }
     
@@ -144,7 +146,8 @@ exports.createUser = async (req, res, next) => {
         fullName: user.fullName,
         role: user.role,
         woreda: user.woreda,
-        department: user.department
+        department: user.department,
+        customDepartment: user.customDepartment
       },
       message: 'User created successfully. Activation email sent.'
     });
@@ -170,7 +173,7 @@ exports.updateUser = async (req, res, next) => {
     }
     
     // Woreda admin can only update users in their woreda
-    if (req.user.role === 'woreda_admin' && user.woreda !== req.user.woreda) {
+    if (req.user.role === 'woreda_admin' && !isSameWoreda(user.woreda, req.user.woreda)) {
       return next(new ErrorResponse('Not authorized', 403));
     }
     
@@ -209,7 +212,7 @@ exports.deleteUser = async (req, res, next) => {
     }
     
     // Woreda admin can only delete users in their woreda
-    if (req.user.role === 'woreda_admin' && user.woreda !== req.user.woreda) {
+    if (req.user.role === 'woreda_admin' && !isSameWoreda(user.woreda, req.user.woreda)) {
       return next(new ErrorResponse('Not authorized', 403));
     }
     
@@ -240,7 +243,13 @@ exports.getUsersByWoreda = async (req, res, next) => {
       return next(new ErrorResponse('Not authorized', 403));
     }
     
-    const users = await User.find({ woreda: req.params.woreda }).select('-password');
+    if (req.user.role === 'woreda_admin' && !isSameWoreda(req.params.woreda, req.user.woreda)) {
+      return next(new ErrorResponse('Not authorized', 403));
+    }
+
+    const woredaRegex = buildWoredaRegex(req.params.woreda);
+    const users = await User.find(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.params.woreda })
+      .select('-password');
     
     res.status(200).json({
       success: true,
@@ -266,7 +275,8 @@ exports.getUsersByRole = async (req, res, next) => {
     
     // Woreda admin can only see users in their woreda
     if (req.user.role === 'woreda_admin') {
-      query.woreda = req.user.woreda;
+      const woredaRegex = buildWoredaRegex(req.user.woreda);
+      query.woreda = woredaRegex ? { $regex: woredaRegex } : req.user.woreda;
     }
     
     const users = await User.find(query).select('-password');

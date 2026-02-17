@@ -2,6 +2,7 @@ const Meeting = require('../models/Meeting');
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const sendEmail = require('../utils/emailService');
+const { buildWoredaRegex } = require('../utils/woreda');
 
 const buildParticipants = async (emails = [], roles = [], woreda) => {
   const normalizedEmails = emails
@@ -12,8 +13,12 @@ const buildParticipants = async (emails = [], roles = [], woreda) => {
     ? await User.find({ email: { $in: normalizedEmails } })
     : [];
 
+  const woredaRegex = buildWoredaRegex(woreda);
   const roleUsers = roles.length
-    ? await User.find({ role: { $in: roles }, woreda })
+    ? await User.find({
+        role: { $in: roles },
+        ...(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda })
+      })
     : [];
 
   const userMap = new Map();
@@ -37,7 +42,8 @@ exports.getMeetings = async (req, res, next) => {
     let filter = {};
 
     if (req.user.role === 'woreda_admin') {
-      filter.woreda = req.user.woreda;
+      const woredaRegex = buildWoredaRegex(req.user.woreda);
+      filter.woreda = woredaRegex ? { $regex: woredaRegex } : req.user.woreda;
     } else if (req.user.role === 'subcity_admin') {
       filter = {};
     } else {
@@ -158,7 +164,12 @@ exports.updateMeeting = async (req, res, next) => {
       return next(new ErrorResponse('Meeting not found', 404));
     }
 
-    if (req.user.role !== 'woreda_admin' || meeting.woreda !== req.user.woreda) {
+    if (req.user.role !== 'woreda_admin') {
+      return next(new ErrorResponse('Not authorized', 403));
+    }
+
+    const woredaRegex = buildWoredaRegex(req.user.woreda);
+    if (woredaRegex ? !woredaRegex.test(meeting.woreda) : meeting.woreda !== req.user.woreda) {
       return next(new ErrorResponse('Not authorized', 403));
     }
 
@@ -187,7 +198,12 @@ exports.deleteMeeting = async (req, res, next) => {
       return next(new ErrorResponse('Meeting not found', 404));
     }
 
-    if (req.user.role !== 'woreda_admin' || meeting.woreda !== req.user.woreda) {
+    if (req.user.role !== 'woreda_admin') {
+      return next(new ErrorResponse('Not authorized', 403));
+    }
+
+    const woredaRegex = buildWoredaRegex(req.user.woreda);
+    if (woredaRegex ? !woredaRegex.test(meeting.woreda) : meeting.woreda !== req.user.woreda) {
       return next(new ErrorResponse('Not authorized', 403));
     }
 

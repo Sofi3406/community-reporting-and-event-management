@@ -47,6 +47,13 @@ const userSchema = new mongoose.Schema({
       return this.role === 'officer';
     }
   },
+  customDepartment: {
+    type: String,
+    trim: true,
+    required: function() {
+      return this.role === 'officer' && this.department === 'Other';
+    }
+  },
   accessCode: {
     type: String,
     required: function() {

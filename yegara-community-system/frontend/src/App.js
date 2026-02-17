@@ -29,9 +29,11 @@ import OfficerAnnouncements from './pages/Officer/Announcements';
 
 // Woreda Admin Pages
 import WoredaAdminDashboard from './pages/WoredaAdmin/Dashboard';
+import WoredaAdminReports from './pages/WoredaAdmin/Reports';
 import ManageOfficers from './pages/WoredaAdmin/ManageOfficers';
 import ManageEvents from './pages/WoredaAdmin/ManageEvents';
 import VirtualMeetings from './pages/WoredaAdmin/VirtualMeetings';
+import WoredaAdminAnalytics from './pages/WoredaAdmin/Analytics';
 
 // Sub-City Admin Pages
 import AnalyticsDashboard from './pages/SubCityAdmin/AnalyticsDashboard';
@@ -158,10 +160,12 @@ function App() {
                 <Layout>
                   <Routes>
                     <Route path="dashboard" element={<WoredaAdminDashboard />} />
+                    <Route path="reports" element={<WoredaAdminReports />} />
                     <Route path="officers" element={<ManageOfficers />} />
                     <Route path="events" element={<ManageEvents />} />
                     <Route path="meetings" element={<VirtualMeetings />} />
                     <Route path="announcements" element={<OfficerAnnouncements />} />
+                    <Route path="analytics" element={<WoredaAdminAnalytics />} />
                     <Route path="profile" element={<Profile />} />
                   </Routes>
                 </Layout>

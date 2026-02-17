@@ -2,12 +2,16 @@ const Announcement = require('../models/Announcement');
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const sendEmail = require('../utils/emailService');
+const { buildWoredaRegex } = require('../utils/woreda');
 
 const resolveAudienceFilter = (user) => {
   if (!user) return {};
 
   const roles = ['all', user.role];
-  const woredaFilter = user.woreda ? { woreda: user.woreda } : {};
+  const woredaRegex = buildWoredaRegex(user.woreda);
+  const woredaFilter = user.woreda
+    ? { woreda: woredaRegex ? { $regex: woredaRegex } : user.woreda }
+    : {};
 
   return {
     audienceRoles: { $in: roles },
@@ -71,7 +75,8 @@ exports.createAnnouncement = async (req, res, next) => {
     };
 
     if (announcement.woreda) {
-      recipientFilter.woreda = announcement.woreda;
+      const woredaRegex = buildWoredaRegex(announcement.woreda);
+      recipientFilter.woreda = woredaRegex ? { $regex: woredaRegex } : announcement.woreda;
     }
 
     const recipients = await User.find(recipientFilter).select('email');

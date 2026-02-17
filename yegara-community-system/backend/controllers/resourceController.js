@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Resource = require('../models/Resource');
 const ErrorResponse = require('../utils/errorResponse');
+const { buildWoredaRegex } = require('../utils/woreda');
 
 // @desc    Get all resources
 // @route   GET /api/resources
@@ -23,8 +24,9 @@ exports.getResources = async (req, res, next) => {
     if (req.user.role === 'resident') {
       baseFilter.isPublic = true;
       if (req.user.woreda) {
+        const woredaRegex = buildWoredaRegex(req.user.woreda);
         baseFilter.$or = [
-          { woreda: req.user.woreda },
+          woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.user.woreda },
           { woreda: { $exists: false } },
           { woreda: null }
         ];
