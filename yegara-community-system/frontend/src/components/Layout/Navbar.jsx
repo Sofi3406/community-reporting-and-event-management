@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
+import { notificationsAPI } from '../../services/api';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -20,6 +21,47 @@ const Navbar = () => {
   const profileMenuRef = useRef(null);
   const notificationMenuRef = useRef(null);
   const socketRef = useRef(null);
+
+  const formatWoredaLabel = (woreda) => {
+    if (!woreda) return 'Woreda';
+
+    const normalized = String(woreda).replace(/_/g, ' ').trim();
+    const woredaMatch = normalized.match(/woreda\s*0*(\d+)/i);
+
+    if (woredaMatch) {
+      return `Woreda ${woredaMatch[1]}`;
+    }
+
+    return normalized;
+  };
+
+  const getProfileRoleLabel = () => {
+    if (!user) return '';
+
+    if (user.role === 'subcity_admin') {
+      return 'Sub city Admin';
+    }
+
+    if (user.role === 'woreda_admin') {
+      return `${formatWoredaLabel(user.woreda)} Admin`;
+    }
+
+    if (user.role === 'officer') {
+      const department = user.department === 'Other'
+        ? (user.customDepartment || 'General')
+        : (user.department || 'General');
+
+      return `${department} Department Officer`;
+    }
+
+    if (user.role === 'resident') {
+      return 'Resident';
+    }
+
+    return user.role;
+  };
+
+  const profileRoleLabel = getProfileRoleLabel();
 
   const handleLogout = () => {
     logout();
@@ -44,6 +86,7 @@ const Navbar = () => {
   };
 
   const isAdminUser = user?.role === 'woreda_admin' || user?.role === 'subcity_admin';
+  const isOfficerUser = user?.role === 'officer';
 
   const getEventsLink = () => {
     if (!user) return '/events';
@@ -66,6 +109,25 @@ const Navbar = () => {
   useEffect(() => {
     if (!user?._id) return;
 
+    const loadNotifications = async () => {
+      try {
+        const response = await notificationsAPI.getMine({ limit: 20 });
+        const savedNotifications = (response.data?.data || []).map((item) => ({
+          id: item._id,
+          type: item.type,
+          message: item.message,
+          timestamp: item.createdAt,
+          read: item.read
+        }));
+
+        setNotifications(savedNotifications);
+      } catch (error) {
+        // Keep navbar functional even if notification history fetch fails.
+      }
+    };
+
+    loadNotifications();
+
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       withCredentials: true
@@ -76,14 +138,17 @@ const Navbar = () => {
 
     socket.on('notification', (payload) => {
       const notification = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id: payload?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         type: payload?.type || 'update',
         message: payload?.message || 'You have a new notification.',
-        timestamp: new Date().toISOString(),
-        read: false
+        timestamp: payload?.createdAt || new Date().toISOString(),
+        read: Boolean(payload?.read)
       };
 
-      setNotifications((prev) => [notification, ...prev].slice(0, 20));
+      setNotifications((prev) => {
+        const deduped = prev.filter((item) => item.id !== notification.id);
+        return [notification, ...deduped].slice(0, 20);
+      });
     });
 
     return () => {
@@ -107,10 +172,20 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  const toggleNotifications = () => {
-    setIsNotificationsOpen((prev) => !prev);
+  const toggleNotifications = async () => {
+    const opening = !isNotificationsOpen;
+    setIsNotificationsOpen(opening);
     setIsProfileMenuOpen(false);
-    setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+
+    if (opening && unreadCount > 0) {
+      setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+
+      try {
+        await notificationsAPI.markAllRead();
+      } catch (error) {
+        // Keep UI responsive even if mark-read call fails.
+      }
+    }
   };
 
   const toggleProfileMenu = () => {
@@ -149,14 +224,16 @@ const Navbar = () => {
                 </Link>
               )}
               
-              <Link
-                to={getEventsLink()}
-                className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Events
-              </Link>
+              {!isOfficerUser && (
+                <Link
+                  to={getEventsLink()}
+                  className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Events
+                </Link>
+              )}
 
-              {!isAdminUser && (
+              {!isAdminUser && !isOfficerUser && (
                 <Link
                   to="/resources"
                   className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
@@ -201,9 +278,12 @@ const Navbar = () => {
                 </div>
 
                 <div className="relative" ref={profileMenuRef}>
-                  <button className="flex items-center space-x-2" onClick={toggleProfileMenu}>
+                  <button className="flex items-center space-x-2 text-left" onClick={toggleProfileMenu}>
                     <UserCircleIcon className="h-8 w-8 text-gray-600" />
-                    <span className="text-sm font-medium">{user.fullName}</span>
+                    <span className="leading-tight">
+                      <span className="block text-sm font-medium text-gray-900">{user.fullName}</span>
+                      <span className="block text-xs text-gray-500">{profileRoleLabel}</span>
+                    </span>
                   </button>
 
                   {isProfileMenuOpen && (
@@ -262,6 +342,13 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {user && (
+              <div className="px-3 py-2 border-b border-gray-200 mb-2">
+                <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{profileRoleLabel}</p>
+              </div>
+            )}
+
             {!isAdminUser && (
               <Link
                 to="/"
@@ -280,14 +367,16 @@ const Navbar = () => {
               </Link>
             )}
             
-            <Link
-              to={getEventsLink()}
-              className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Events
-            </Link>
+            {!isOfficerUser && (
+              <Link
+                to={getEventsLink()}
+                className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Events
+              </Link>
+            )}
 
-            {!isAdminUser && (
+            {!isAdminUser && !isOfficerUser && (
               <Link
                 to="/resources"
                 className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"

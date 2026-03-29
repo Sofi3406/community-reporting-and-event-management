@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { eventsAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const ManageEvents = () => {
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -95,6 +97,20 @@ const ManageEvents = () => {
     return organizer.fullName ? `${roleLabel} / ${organizer.fullName}` : roleLabel;
   };
 
+  const formatEventTime = (value) => {
+    const date = new Date(value);
+    return {
+      day: date.toLocaleDateString(undefined, { day: '2-digit' }),
+      month: date.toLocaleDateString(undefined, { month: 'short' }).toUpperCase(),
+      full: date.toLocaleString()
+    };
+  };
+
+  const isEventOwner = (event) => {
+    const organizerId = typeof event.organizer === 'object' ? event.organizer?._id : event.organizer;
+    return String(organizerId || '') === String(user?._id || '');
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -170,27 +186,43 @@ const ManageEvents = () => {
       ) : (
         <div className="space-y-4">
           {events.map((event) => (
-            <div key={event._id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div key={event._id} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col md:flex-row md:justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="shrink-0 rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white w-14 h-14 flex flex-col items-center justify-center shadow-sm">
+                    <span className="text-[10px] tracking-wide">{formatEventTime(event.date).month}</span>
+                    <span className="text-base font-semibold leading-none">{formatEventTime(event.date).day}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">{event.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{event.description || 'No description available.'}</p>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-600">
-                  <p><span className="font-medium text-gray-800">Date:</span> {new Date(event.date).toLocaleString()}</p>
-                  <p><span className="font-medium text-gray-800">Location:</span> {event.location}</p>
-                  <p><span className="font-medium text-gray-800">Scope:</span> {event.woreda || 'All woredas'}</p>
-                  <p><span className="font-medium text-gray-800">Organizer:</span> {formatOrganizer(event.organizer)}</p>
+
+                <div className="text-sm text-gray-600 md:text-right">
+                  <p>{formatEventTime(event.date).full}</p>
+                  <p className="mt-1 text-gray-700 font-medium">{event.location}</p>
+                  <div className="mt-2 flex flex-wrap md:justify-end gap-2">
+                    <span className="inline-flex items-center rounded-full bg-primary-50 text-primary-700 px-3 py-1 text-xs font-medium border border-primary-100">
+                      Scope: {event.woreda || 'All Woredas'}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-gray-50 text-gray-700 px-3 py-1 text-xs font-medium border border-gray-200">
+                      {formatOrganizer(event.organizer)}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-4 flex gap-3">
-                <button className="btn btn-secondary" onClick={() => handleEdit(event)}>
-                  Edit
-                </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(event._id)}>
-                  Delete
-                </button>
-              </div>
+
+              {isEventOwner(event) && (
+                <div className="mt-4 flex gap-3">
+                  <button className="inline-flex items-center rounded-lg border border-primary-200 text-primary-700 text-sm font-medium px-3 py-1.5 hover:bg-primary-50" onClick={() => handleEdit(event)}>
+                    Edit
+                  </button>
+                  <button className="inline-flex items-center rounded-lg border border-red-200 text-red-700 text-sm font-medium px-3 py-1.5 hover:bg-red-50" onClick={() => handleDelete(event._id)}>
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

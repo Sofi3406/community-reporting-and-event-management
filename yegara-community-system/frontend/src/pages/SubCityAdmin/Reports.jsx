@@ -13,6 +13,15 @@ const Reports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const formatReportTime = (value) => {
+    const date = new Date(value);
+    return {
+      day: date.toLocaleDateString(undefined, { day: '2-digit' }),
+      month: date.toLocaleDateString(undefined, { month: 'short' }).toUpperCase(),
+      full: date.toLocaleString()
+    };
+  };
+
   const fetchReports = async () => {
     setLoading(true);
     try {
@@ -51,28 +60,34 @@ const Reports = () => {
       ) : (
         <div className="space-y-4">
           {reports.map((report) => (
-            <div key={report._id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div key={report._id} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col lg:flex-row lg:justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{report.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{report.description}</p>
-                  <div className="mt-2 text-xs text-gray-500">
-                    Submitted: {new Date(report.createdAt).toLocaleString()}
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="shrink-0 rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white w-14 h-14 flex flex-col items-center justify-center shadow-sm">
+                    <span className="text-[10px] tracking-wide">{formatReportTime(report.createdAt).month}</span>
+                    <span className="text-base font-semibold leading-none">{formatReportTime(report.createdAt).day}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">{report.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{report.description || 'No description provided.'}</p>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Submitted: {formatReportTime(report.createdAt).full}
+                    </div>
                   </div>
                 </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div>
-                    <span className="font-medium text-gray-800">Category:</span> {report.category}
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-800">Woreda:</span> {report.woreda || 'N/A'}
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-800">Resident:</span>{' '}
-                    {report.residentId?.fullName || 'Resident'}
-                  </div>
-                  <div>
-                    <span className={`inline-flex text-xs px-2 py-1 rounded-full ${statusStyles[report.status] || 'bg-gray-100 text-gray-700'}`}>
+
+                <div className="text-sm text-gray-600 lg:text-right">
+                  <div className="flex flex-wrap lg:justify-end gap-2">
+                    <span className="inline-flex items-center rounded-full bg-gray-50 text-gray-700 px-3 py-1 text-xs font-medium border border-gray-200">
+                      Category: {report.category || 'General'}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-primary-50 text-primary-700 px-3 py-1 text-xs font-medium border border-primary-100">
+                      Woreda: {report.woreda || 'N/A'}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-3 py-1 text-xs font-medium border border-indigo-100">
+                      Resident: {report.residentId?.fullName || 'Resident'}
+                    </span>
+                    <span className={`inline-flex items-center text-xs px-3 py-1 rounded-full font-medium ${statusStyles[report.status] || 'bg-gray-100 text-gray-700'}`}>
                       {report.status}
                     </span>
                   </div>

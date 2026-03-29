@@ -1,20 +1,78 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/Layout/Navbar';
+import { publicAPI } from '../../services/api';
 
 const Home = () => {
+  const [snapshot, setSnapshot] = useState({
+    openReports: 0,
+    resolvedThisWeek: 0,
+    upcomingEvents: 0,
+    activeResources: 0,
+    updatedAt: null
+  });
+  const [loadingSnapshot, setLoadingSnapshot] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchSnapshot = async () => {
+      setLoadingSnapshot(true);
+      try {
+        const response = await publicAPI.getLandingStats();
+        if (!isMounted) return;
+
+        const data = response.data?.data || {};
+        setSnapshot({
+          openReports: Number(data.openReports || 0),
+          resolvedThisWeek: Number(data.resolvedThisWeek || 0),
+          upcomingEvents: Number(data.upcomingEvents || 0),
+          activeResources: Number(data.activeResources || 0),
+          updatedAt: data.updatedAt || null
+        });
+      } catch (error) {
+        if (isMounted) {
+          setSnapshot((prev) => ({ ...prev, updatedAt: null }));
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingSnapshot(false);
+        }
+      }
+    };
+
+    fetchSnapshot();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const stats = useMemo(
+    () => [
+      { label: 'Open reports', value: snapshot.openReports },
+      { label: 'Resolved this week', value: snapshot.resolvedThisWeek },
+      { label: 'Upcoming events', value: snapshot.upcomingEvents },
+      { label: 'Active resources', value: snapshot.activeResources }
+    ],
+    [snapshot]
+  );
+
+  const formatNumber = (value) => new Intl.NumberFormat().format(value || 0);
+
   return (
-    <div className="min-h-screen bg-[#fbf8f2]">
+    <div className="min-h-screen bg-gradient-to-b from-[#fff8ef] via-[#fffdf7] to-[#f3faf9]">
       <Navbar />
 
       <header className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(251,191,36,0.18),transparent_42%),radial-gradient(circle_at_82%_10%,rgba(45,212,191,0.14),transparent_38%),radial-gradient(circle_at_82%_76%,rgba(14,165,233,0.12),transparent_42%)]" />
         <div className="absolute -top-16 -right-20 h-72 w-72 rounded-full bg-amber-200/70 blur-3xl float-slow" />
         <div className="absolute bottom-0 -left-10 h-64 w-64 rounded-full bg-emerald-200/60 blur-3xl float-slow float-delay" />
 
         <div className="max-w-7xl mx-auto px-6 py-16 lg:py-24 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="rise-in">
-              <p className="text-xs uppercase tracking-[0.3em] text-amber-700 font-semibold">
+              <p className="inline-block text-xs uppercase tracking-[0.28em] text-amber-800 font-semibold px-3 py-1 rounded-full border border-amber-300/80 bg-white/70">
                 Yegara Community System
               </p>
               <h1 className="mt-4 text-4xl md:text-6xl font-display font-semibold text-slate-900 leading-tight">
@@ -27,48 +85,51 @@ const Home = () => {
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link
                   to="/register"
-                  className="bg-amber-500 text-slate-900 px-6 py-3 rounded-xl font-semibold hover:bg-amber-400 shadow-sm"
+                  className="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 text-slate-900 px-6 py-3 rounded-xl font-semibold hover:brightness-105 shadow-md shadow-amber-200/70"
                 >
                   Start as a resident
                 </Link>
                 <Link
                   to="/login"
-                  className="bg-white/80 backdrop-blur border border-amber-200 text-slate-800 px-6 py-3 rounded-xl font-semibold hover:bg-white"
+                  className="bg-white/85 backdrop-blur border border-slate-200 text-slate-800 px-6 py-3 rounded-xl font-semibold hover:bg-white shadow-sm"
                 >
                   Sign in
                 </Link>
               </div>
-              <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-slate-600">
-                <div className="bg-white/70 border border-amber-100 rounded-xl px-4 py-3">
-                  <p className="text-slate-900 font-semibold">2,400+</p>
-                  <p>reports tracked with transparency</p>
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-600">
+                <div className="bg-white/80 border border-amber-100 rounded-xl px-4 py-3 shadow-sm">
+                  <p className="text-slate-900 font-semibold">Resident-first workflow</p>
+                  <p>Submit once, follow updates, and get notified when action is taken.</p>
                 </div>
-                <div className="bg-white/70 border border-emerald-100 rounded-xl px-4 py-3">
-                  <p className="text-slate-900 font-semibold">24/7</p>
-                  <p>community response visibility</p>
+                <div className="bg-white/80 border border-emerald-100 rounded-xl px-4 py-3 shadow-sm">
+                  <p className="text-slate-900 font-semibold">Shared governance</p>
+                  <p>Residents, officers, and admins collaborate in one transparent system.</p>
                 </div>
               </div>
             </div>
 
             <div className="rise-in rise-in-delay">
-              <div className="rounded-3xl border border-amber-100 bg-white/90 backdrop-blur p-8 shadow-xl">
+              <div className="rounded-3xl border border-white/70 bg-white/90 backdrop-blur p-8 shadow-xl shadow-emerald-100/80">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-emerald-600 font-semibold">Live snapshot</p>
                     <h2 className="text-2xl font-display text-slate-900">Neighborhood pulse</h2>
                   </div>
-                  <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">Updated now</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
+                    {loadingSnapshot
+                      ? 'Syncing...'
+                      : snapshot.updatedAt
+                        ? `Updated ${new Date(snapshot.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        : 'Updated recently'}
+                  </span>
                 </div>
                 <div className="mt-6 grid grid-cols-2 gap-4">
-                  {[
-                    { label: 'Open reports', value: '128' },
-                    { label: 'Resolved this week', value: '43' },
-                    { label: 'Upcoming events', value: '7' },
-                    { label: 'Active resources', value: '215' }
-                  ].map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white px-4 py-5 shadow-sm">
-                      <p className="text-xs uppercase tracking-wider text-slate-400">{stat.label}</p>
-                      <p className="mt-2 text-2xl font-semibold text-slate-900">{stat.value}</p>
+                  {stats.map((stat) => (
+                    <div key={stat.label} className="rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50 px-4 py-5 shadow-sm">
+                      <p className="text-[11px] uppercase tracking-wider text-slate-400">{stat.label}</p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {loadingSnapshot ? '...' : formatNumber(stat.value)}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -94,7 +155,7 @@ const Home = () => {
               Purpose-built tools for residents and leaders to coordinate reports, resources, and public events.
             </p>
           </div>
-          <div className="text-sm text-slate-500 bg-white/70 border border-slate-200 rounded-xl px-4 py-3">
+          <div className="text-sm text-slate-500 bg-white/70 border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
             Officers and admins are onboarded by woreda leadership.
           </div>
         </div>
@@ -114,7 +175,7 @@ const Home = () => {
               description: 'Find official notices, emergency updates, and useful documents by woreda.'
             }
           ].map((item) => (
-            <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
               <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
               <p className="mt-3 text-slate-600">{item.description}</p>
               <div className="mt-4 h-1 w-10 rounded-full bg-gradient-to-r from-amber-400 to-emerald-400" />

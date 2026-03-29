@@ -14,12 +14,29 @@ const buildParticipants = async (emails = [], roles = [], woreda) => {
     : [];
 
   const woredaRegex = buildWoredaRegex(woreda);
-  const roleUsers = roles.length
-    ? await User.find({
-        role: { $in: roles },
-        ...(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda })
-      })
-    : [];
+  const roleFilter = {};
+
+  if (woreda && woreda !== 'All Woredas') {
+    roleFilter.woreda = woredaRegex ? { $regex: woredaRegex } : woreda;
+  }
+
+  const normalizedRoles = roles
+    .map((role) => String(role).trim().toLowerCase())
+    .filter(Boolean);
+
+  const includeAllRoles = normalizedRoles.includes('all');
+  const allowedRoles = ['resident', 'officer', 'woreda_admin', 'subcity_admin'];
+  const selectedRoles = normalizedRoles.filter((role) => allowedRoles.includes(role));
+
+  let roleUsers = [];
+  if (includeAllRoles) {
+    roleUsers = await User.find({ ...roleFilter });
+  } else if (selectedRoles.length) {
+    roleUsers = await User.find({
+      role: { $in: selectedRoles },
+      ...roleFilter
+    });
+  }
 
   const userMap = new Map();
 
@@ -43,7 +60,9 @@ exports.getMeetings = async (req, res, next) => {
 
     if (req.user.role === 'woreda_admin') {
       const woredaRegex = buildWoredaRegex(req.user.woreda);
-      filter.woreda = woredaRegex ? { $regex: woredaRegex } : req.user.woreda;
+      filter = woredaRegex
+        ? { $or: [{ woreda: { $regex: woredaRegex } }, { woreda: 'All Woredas' }] }
+        : { $or: [{ woreda: req.user.woreda }, { woreda: 'All Woredas' }] };
     } else if (req.user.role === 'subcity_admin') {
       filter = {};
     } else {
@@ -72,14 +91,22 @@ exports.getMeetings = async (req, res, next) => {
 
 // @desc    Create meeting
 // @route   POST /api/meetings
-// @access  Private (Woreda Admin)
+// @access  Private (Woreda Admin / Sub-City Admin)
 exports.createMeeting = async (req, res, next) => {
   try {
-    if (req.user.role !== 'woreda_admin') {
+    if (req.user.role !== 'woreda_admin' && req.user.role !== 'subcity_admin') {
       return next(new ErrorResponse('Not authorized', 403));
     }
 
-    const { title, description, meetingLink, scheduledAt, participantEmails, participantRoles } = req.body;
+    const {
+      title,
+      description,
+      meetingLink,
+      scheduledAt,
+      participantEmails,
+      participantRoles,
+      woreda
+    } = req.body;
 
     if (!title || !meetingLink || !scheduledAt) {
       return next(new ErrorResponse('Please fill in all required fields', 400));
@@ -97,7 +124,11 @@ exports.createMeeting = async (req, res, next) => {
         ? participantRoles.split(',')
         : [];
 
-    const participants = await buildParticipants(emails, roles, req.user.woreda);
+    const meetingScope = req.user.role === 'woreda_admin'
+      ? req.user.woreda
+      : (woreda || 'All Woredas');
+
+    const participants = await buildParticipants(emails, roles, meetingScope);
 
     if (!participants.length) {
       return next(new ErrorResponse('No valid participants found', 400));
@@ -108,7 +139,7 @@ exports.createMeeting = async (req, res, next) => {
       description,
       meetingLink,
       scheduledAt,
-      woreda: req.user.woreda,
+      woreda: meetingScope,
       createdBy: req.user.id,
       participants
     });
@@ -155,7 +186,7 @@ exports.createMeeting = async (req, res, next) => {
 
 // @desc    Update meeting
 // @route   PUT /api/meetings/:id
-// @access  Private (Woreda Admin)
+// @access  Private (Woreda Admin / Sub-City Admin)
 exports.updateMeeting = async (req, res, next) => {
   try {
     let meeting = await Meeting.findById(req.params.id);
@@ -164,16 +195,51 @@ exports.updateMeeting = async (req, res, next) => {
       return next(new ErrorResponse('Meeting not found', 404));
     }
 
-    if (req.user.role !== 'woreda_admin') {
+    if (req.user.role !== 'woreda_admin' && req.user.role !== 'subcity_admin') {
       return next(new ErrorResponse('Not authorized', 403));
     }
 
-    const woredaRegex = buildWoredaRegex(req.user.woreda);
-    if (woredaRegex ? !woredaRegex.test(meeting.woreda) : meeting.woreda !== req.user.woreda) {
-      return next(new ErrorResponse('Not authorized', 403));
+    if (meeting.createdBy.toString() !== req.user.id) {
+      return next(new ErrorResponse('Not authorized to update this meeting', 403));
     }
 
-    meeting = await Meeting.findByIdAndUpdate(req.params.id, req.body, {
+    const updates = { ...req.body };
+
+    if (req.user.role === 'subcity_admin' && !updates.woreda) {
+      updates.woreda = meeting.woreda;
+    }
+
+    if (req.user.role === 'woreda_admin') {
+      updates.woreda = req.user.woreda;
+    }
+
+    const hasParticipantUpdates = updates.participantEmails !== undefined || updates.participantRoles !== undefined;
+
+    if (hasParticipantUpdates) {
+      const emails = Array.isArray(updates.participantEmails)
+        ? updates.participantEmails
+        : typeof updates.participantEmails === 'string'
+          ? updates.participantEmails.split(',')
+          : [];
+
+      const roles = Array.isArray(updates.participantRoles)
+        ? updates.participantRoles
+        : typeof updates.participantRoles === 'string'
+          ? updates.participantRoles.split(',')
+          : [];
+
+      const participants = await buildParticipants(emails, roles, updates.woreda || meeting.woreda);
+
+      if (!participants.length) {
+        return next(new ErrorResponse('No valid participants found', 400));
+      }
+
+      updates.participants = participants;
+      delete updates.participantEmails;
+      delete updates.participantRoles;
+    }
+
+    meeting = await Meeting.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true
     });
@@ -189,7 +255,7 @@ exports.updateMeeting = async (req, res, next) => {
 
 // @desc    Delete meeting
 // @route   DELETE /api/meetings/:id
-// @access  Private (Woreda Admin)
+// @access  Private (Woreda Admin / Sub-City Admin)
 exports.deleteMeeting = async (req, res, next) => {
   try {
     const meeting = await Meeting.findById(req.params.id);
@@ -198,13 +264,12 @@ exports.deleteMeeting = async (req, res, next) => {
       return next(new ErrorResponse('Meeting not found', 404));
     }
 
-    if (req.user.role !== 'woreda_admin') {
+    if (req.user.role !== 'woreda_admin' && req.user.role !== 'subcity_admin') {
       return next(new ErrorResponse('Not authorized', 403));
     }
 
-    const woredaRegex = buildWoredaRegex(req.user.woreda);
-    if (woredaRegex ? !woredaRegex.test(meeting.woreda) : meeting.woreda !== req.user.woreda) {
-      return next(new ErrorResponse('Not authorized', 403));
+    if (meeting.createdBy.toString() !== req.user.id) {
+      return next(new ErrorResponse('Not authorized to delete this meeting', 403));
     }
 
     await meeting.remove();

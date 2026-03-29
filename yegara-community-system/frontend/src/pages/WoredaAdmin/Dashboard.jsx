@@ -99,24 +99,27 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      <div>
+      <div className="rounded-2xl border border-primary-100 bg-gradient-to-r from-white via-primary-50 to-sky-50 p-6 shadow-sm">
         <h1 className="text-3xl font-semibold text-gray-900">Woreda Admin Dashboard</h1>
         <p className="text-gray-600 mt-2">Overview of reports, users, and activities in your woreda.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div key={stat.label} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
             <p className="text-sm text-gray-500">{stat.label}</p>
             <p className="mt-1 text-2xl font-semibold text-gray-900">
               {loading ? '...' : stat.value}
             </p>
+            <div className="mt-3 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full bg-primary-600" style={{ width: loading ? '0%' : '100%' }}></div>
+            </div>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Recent reports</h2>
             <Link to="/woreda-admin/reports" className="text-sm text-primary-600 hover:text-primary-700">
@@ -152,7 +155,7 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Report status</h2>
             <div className="mt-4 space-y-2 text-sm text-gray-600">

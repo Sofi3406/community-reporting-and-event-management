@@ -62,12 +62,12 @@ const ManageWoredaAdmins = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="rounded-2xl border border-primary-100 bg-gradient-to-r from-white via-primary-50 to-sky-50 p-6 shadow-sm">
         <h1 className="text-3xl font-semibold text-gray-900">Manage woreda admins</h1>
         <p className="text-gray-600 mt-2">Create or remove woreda admin accounts.</p>
       </div>
 
-      <form onSubmit={handleCreate} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+      <form onSubmit={handleCreate} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Full name</label>
           <input
@@ -103,13 +103,13 @@ const ManageWoredaAdmins = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
         </div>
       ) : admins.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-gray-600">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm text-gray-600">
           No woreda admins found.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50/80">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
@@ -119,14 +119,18 @@ const ManageWoredaAdmins = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {admins.map((admin) => (
-                <tr key={admin._id}>
-                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">{admin.fullName}</td>
+                <tr key={admin._id} className="hover:bg-gray-50/70 transition-colors">
+                  <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{admin.fullName}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{admin.email}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{admin.woreda}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    <span className="inline-flex items-center rounded-full bg-primary-50 text-primary-700 px-2.5 py-1 text-xs font-medium border border-primary-100">
+                      {admin.woreda}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDelete(admin._id)}
-                      className="text-red-600 text-sm hover:text-red-700"
+                      className="inline-flex items-center rounded-lg border border-red-200 text-red-700 text-sm font-medium px-3 py-1.5 hover:bg-red-50"
                     >
                       Delete
                     </button>

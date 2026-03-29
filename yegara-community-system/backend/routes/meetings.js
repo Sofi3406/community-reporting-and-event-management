@@ -12,10 +12,10 @@ router.use(authenticate);
 
 router.route('/')
   .get(getMeetings)
-  .post(authorize('woreda_admin'), createMeeting);
+  .post(authorize('woreda_admin', 'subcity_admin'), createMeeting);
 
 router.route('/:id')
-  .put(authorize('woreda_admin'), updateMeeting)
-  .delete(authorize('woreda_admin'), deleteMeeting);
+  .put(authorize('woreda_admin', 'subcity_admin'), updateMeeting)
+  .delete(authorize('woreda_admin', 'subcity_admin'), deleteMeeting);
 
 module.exports = router;

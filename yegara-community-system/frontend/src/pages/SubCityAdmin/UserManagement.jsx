@@ -159,12 +159,12 @@ const UserManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="rounded-2xl border border-primary-100 bg-gradient-to-r from-white via-primary-50 to-sky-50 p-6 shadow-sm">
         <h1 className="text-3xl font-semibold text-gray-900">User management</h1>
         <p className="text-gray-600 mt-2">View, filter, and manage all user accounts.</p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Filter by role</label>
           <select
@@ -195,13 +195,13 @@ const UserManagement = () => {
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-gray-600">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm text-gray-600">
           No users found for the selected filters.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50/80">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
@@ -214,10 +214,14 @@ const UserManagement = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredUsers.map((user) => (
-                <tr key={user._id}>
-                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">{user.fullName}</td>
+                <tr key={user._id} className="hover:bg-gray-50/70 transition-colors">
+                  <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{user.fullName}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{user.email}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{roleLabel(user.role)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    <span className="inline-flex items-center rounded-full bg-primary-50 text-primary-700 px-2.5 py-1 text-xs font-medium border border-primary-100">
+                      {roleLabel(user.role)}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-600">{user.woreda || '-'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{user.department || '-'}</td>
                   <td className="px-4 py-3 text-sm">
@@ -228,13 +232,13 @@ const UserManagement = () => {
                   <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleOpenEdit(user)}
-                        className="text-primary-600 text-sm hover:text-primary-700 mr-4"
+                        className="inline-flex items-center rounded-lg border border-primary-200 text-primary-700 text-sm font-medium px-3 py-1.5 hover:bg-primary-50 mr-2"
                       >
                         Edit
                       </button>
                     <button
                       onClick={() => handleDelete(user._id)}
-                      className="text-red-600 text-sm hover:text-red-700"
+                      className="inline-flex items-center rounded-lg border border-red-200 text-red-700 text-sm font-medium px-3 py-1.5 hover:bg-red-50"
                     >
                       Delete
                     </button>
@@ -248,10 +252,10 @@ const UserManagement = () => {
 
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-xl w-full max-w-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Edit user</h2>
-              <button onClick={handleCloseEdit} className="text-gray-500 hover:text-gray-700">Close</button>
+              <button onClick={handleCloseEdit} className="inline-flex items-center rounded-lg border border-gray-200 text-gray-600 text-sm font-medium px-3 py-1.5 hover:bg-gray-50">Close</button>
             </div>
 
             <form onSubmit={handleSaveEdit} className="grid grid-cols-1 md:grid-cols-2 gap-4">

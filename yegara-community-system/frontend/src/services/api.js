@@ -109,4 +109,15 @@ export const announcementsAPI = {
   delete: (id) => api.delete(`/announcements/${id}`)
 };
 
+// Notifications API
+export const notificationsAPI = {
+  getMine: (params) => api.get('/notifications', { params }),
+  markAllRead: () => api.put('/notifications/read-all')
+};
+
+// Public API
+export const publicAPI = {
+  getLandingStats: () => api.get('/public/landing-stats')
+};
+
 export default api;

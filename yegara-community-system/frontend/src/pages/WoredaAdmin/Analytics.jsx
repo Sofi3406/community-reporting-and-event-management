@@ -134,42 +134,57 @@ const Analytics = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="rounded-2xl border border-primary-100 bg-gradient-to-r from-white via-primary-50 to-sky-50 p-6 shadow-sm">
         <h1 className="text-3xl font-semibold text-gray-900">Analytics</h1>
         <p className="text-gray-600 mt-2">Detailed report analytics for your woreda.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">Total reports</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.total}</p>
+          <div className="mt-3 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-full bg-primary-600" style={{ width: '100%' }}></div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">Pending</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.pending}</p>
+          <div className="mt-3 h-1.5 rounded-full bg-yellow-100 overflow-hidden">
+            <div className="h-full bg-yellow-500" style={{ width: stats.total ? `${(stats.pending / stats.total) * 100}%` : '0%' }}></div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">In progress</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.inProgress}</p>
+          <div className="mt-3 h-1.5 rounded-full bg-blue-100 overflow-hidden">
+            <div className="h-full bg-blue-500" style={{ width: stats.total ? `${(stats.inProgress / stats.total) * 100}%` : '0%' }}></div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">Resolved</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.resolved}</p>
+          <div className="mt-3 h-1.5 rounded-full bg-green-100 overflow-hidden">
+            <div className="h-full bg-green-500" style={{ width: stats.total ? `${(stats.resolved / stats.total) * 100}%` : '0%' }}></div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">Rejected</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.rejected}</p>
+          <div className="mt-3 h-1.5 rounded-full bg-red-100 overflow-hidden">
+            <div className="h-full bg-red-500" style={{ width: stats.total ? `${(stats.rejected / stats.total) * 100}%` : '0%' }}></div>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">Resolution rate</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">
             {resolutionStats.resolutionRate.toFixed(1)}%
           </p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <p className="text-sm text-gray-500">Avg resolution days</p>
           <p className="mt-1 text-2xl font-semibold text-gray-900">
             {resolutionStats.avgResolutionDays.toFixed(1)}
@@ -178,7 +193,7 @@ const Analytics = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900">Reports by status</h2>
           {statusData.every((item) => item.value === 0) ? (
             <p className="mt-4 text-sm text-gray-500">No status data yet.</p>
@@ -197,7 +212,7 @@ const Analytics = () => {
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900">Reports by category</h2>
           {categoryData.length === 0 ? (
             <p className="mt-4 text-sm text-gray-500">No category data yet.</p>
@@ -218,7 +233,7 @@ const Analytics = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900">Reports over time (last 30 days)</h2>
           {trendData.every((item) => item.value === 0) ? (
             <p className="mt-4 text-sm text-gray-500">No recent reports.</p>
@@ -237,7 +252,7 @@ const Analytics = () => {
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900">Recent reports</h2>
           {recentReports.length === 0 ? (
             <p className="mt-4 text-sm text-gray-500">No reports submitted yet.</p>

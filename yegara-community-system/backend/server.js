@@ -24,6 +24,8 @@ const events = require('./routes/events');
 const resources = require('./routes/resources');
 const meetings = require('./routes/meetings');
 const announcements = require('./routes/announcements');
+const notifications = require('./routes/notifications');
+const publicRoutes = require('./routes/public');
 
 // Import middleware
 const errorHandler = require('./middleware/error');
@@ -83,6 +85,8 @@ app.use('/api/events', events);
 app.use('/api/resources', resources);
 app.use('/api/meetings', meetings);
 app.use('/api/announcements', announcements);
+app.use('/api/notifications', notifications);
+app.use('/api/public', publicRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -106,7 +110,9 @@ app.get('/', (req, res) => {
       events: '/api/events',
       resources: '/api/resources',
       meetings: '/api/meetings',
-      announcements: '/api/announcements'
+      announcements: '/api/announcements',
+      notifications: '/api/notifications',
+      public: '/api/public'
     }
   });
 });

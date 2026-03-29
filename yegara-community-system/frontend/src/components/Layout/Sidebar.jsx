@@ -19,9 +19,10 @@ const ResidentSidebar = ({ onLogout }) => {
     { to: '/resident/dashboard', icon: HomeIcon, label: 'Dashboard' },
     { to: '/resident/reports', icon: DocumentTextIcon, label: 'My Reports' },
     { to: '/resident/reports/new', icon: DocumentArrowUpIcon, label: 'New Report' },
-    { to: '/events', icon: CalendarIcon, label: 'Events' },
+    { to: '/resident/meetings', icon: CalendarIcon, label: 'Virtual Meetings' },
+    { to: '/resident/events', icon: CalendarIcon, label: 'Events' },
     { to: '/announcements', icon: DocumentTextIcon, label: 'Public Updates' },
-    { to: '/resources', icon: DocumentTextIcon, label: 'Resources' },
+    { to: '/resident/resources', icon: DocumentTextIcon, label: 'Resources' },
     { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
@@ -65,8 +66,9 @@ const OfficerSidebar = ({ onLogout }) => {
     { to: '/officer/reports', icon: DocumentTextIcon, label: 'Manage Reports' },
     { to: '/officer/resources', icon: DocumentArrowUpIcon, label: 'Upload Resources' },
     { to: '/officer/updates', icon: DocumentTextIcon, label: 'Post Updates' },
+    { to: '/officer/meetings', icon: CalendarIcon, label: 'Virtual Meetings' },
     { to: '/officer/announcements', icon: DocumentTextIcon, label: 'Announcements' },
-    { to: '/events', icon: CalendarIcon, label: 'Events' },
+    { to: '/officer/events', icon: CalendarIcon, label: 'Events' },
     { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
@@ -209,6 +211,7 @@ const SubCityAdminSidebar = ({ onLogout }) => {
     { to: '/subcity-admin/dashboard', icon: HomeIcon, label: 'Analytics Dashboard' },
     { to: '/subcity-admin/reports', icon: DocumentTextIcon, label: 'All Reports' },
     { to: '/subcity-admin/admins', icon: UserGroupIcon, label: 'Manage Woreda Admins' },
+    { to: '/subcity-admin/meetings', icon: CalendarIcon, label: 'Virtual Meetings' },
     { to: '/subcity-admin/users', icon: UserGroupIcon, label: 'User Management' },
     { to: '/subcity-admin/announcements', icon: DocumentTextIcon, label: 'Announcements' },
     { to: '/subcity-admin/system', icon: CogIcon, label: 'System Settings' },

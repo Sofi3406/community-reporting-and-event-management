@@ -130,6 +130,9 @@ function App() {
                     <Route path="reports" element={<MyReports />} />
                     <Route path="reports/new" element={<ReportIssue />} />
                     <Route path="reports/:id" element={<TrackReport />} />
+                    <Route path="events" element={<Events />} />
+                    <Route path="resources" element={<Resources />} />
+                    <Route path="meetings" element={<VirtualMeetings />} />
                     <Route path="profile" element={<Profile />} />
                   </Routes>
                 </Layout>
@@ -147,6 +150,8 @@ function App() {
                     <Route path="reports" element={<ManageReports />} />
                     <Route path="resources" element={<UploadResource />} />
                     <Route path="updates" element={<PostUpdates />} />
+                    <Route path="events" element={<Events />} />
+                    <Route path="meetings" element={<VirtualMeetings />} />
                     <Route path="announcements" element={<OfficerAnnouncements />} />
                     <Route path="profile" element={<Profile />} />
                   </Routes>
@@ -184,6 +189,7 @@ function App() {
                     <Route path="dashboard" element={<AnalyticsDashboard />} />
                     <Route path="reports" element={<SubCityAdminReports />} />
                     <Route path="events" element={<SubCityAdminEvents />} />
+                    <Route path="meetings" element={<VirtualMeetings />} />
                     <Route path="admins" element={<ManageWoredaAdmins />} />
                     <Route path="users" element={<UserManagement />} />
                     <Route path="announcements" element={<OfficerAnnouncements />} />

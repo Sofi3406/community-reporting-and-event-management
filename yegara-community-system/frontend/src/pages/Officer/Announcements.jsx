@@ -70,6 +70,15 @@ const Announcements = () => {
     fetchAnnouncements();
   }, []);
 
+  const formatAnnouncementTime = (value) => {
+    const date = new Date(value);
+    return {
+      day: date.toLocaleDateString(undefined, { day: '2-digit' }),
+      month: date.toLocaleDateString(undefined, { month: 'short' }).toUpperCase(),
+      full: date.toLocaleString()
+    };
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -132,19 +141,36 @@ const Announcements = () => {
       ) : (
         <div className="space-y-4">
           {announcements.map((item) => (
-            <div key={item._id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">{item.title}</h2>
+            <div key={item._id} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="shrink-0 rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white w-14 h-14 flex flex-col items-center justify-center shadow-sm">
+                    <span className="text-[10px] tracking-wide">{formatAnnouncementTime(item.createdAt).month}</span>
+                    <span className="text-base font-semibold leading-none">{formatAnnouncementTime(item.createdAt).day}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-semibold text-gray-900 truncate">{item.title}</h2>
+                    <p className="text-xs text-gray-500 mt-1">{formatAnnouncementTime(item.createdAt).full}</p>
+                  </div>
+                </div>
+
                 <button
                   onClick={() => handleDelete(item._id)}
-                  className="text-sm text-red-600 hover:text-red-700"
+                  className="inline-flex items-center rounded-lg border border-red-200 text-red-700 text-sm font-medium px-3 py-1.5 hover:bg-red-50"
                 >
                   Delete
                 </button>
               </div>
-              <p className="mt-2 text-gray-600">{item.message}</p>
-              <div className="mt-3 text-xs text-gray-500">
-                Category: {item.category || 'General'} · Audience: {item.audienceRoles?.join(', ')}
+
+              <p className="mt-3 text-gray-700 leading-relaxed">{item.message}</p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-primary-50 text-primary-700 px-3 py-1 text-xs font-medium border border-primary-100">
+                  Category: {item.category || 'General'}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-gray-50 text-gray-700 px-3 py-1 text-xs font-medium border border-gray-200">
+                  Audience: {item.audienceRoles?.join(', ') || 'All'}
+                </span>
               </div>
             </div>
           ))}

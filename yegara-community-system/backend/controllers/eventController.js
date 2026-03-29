@@ -1,4 +1,6 @@
 const Event = require('../models/Event');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 const ErrorResponse = require('../utils/errorResponse');
 const { buildWoredaRegex } = require('../utils/woreda');
 
@@ -114,6 +116,52 @@ exports.createEvent = async (req, res, next) => {
 
     const event = await Event.create(req.body);
 
+    const io = req.app.get('io');
+    if (io) {
+      let recipientQuery = {
+        _id: { $ne: req.user.id },
+        isActive: true
+      };
+
+      if (event.woreda && event.woreda !== 'All Woredas') {
+        const woredaRegex = buildWoredaRegex(event.woreda);
+        recipientQuery = {
+          ...recipientQuery,
+          $or: [
+            woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: event.woreda },
+            { role: 'subcity_admin' }
+          ]
+        };
+      }
+
+      const recipients = await User.find(recipientQuery).select('_id');
+      if (recipients.length > 0) {
+        const notificationDocs = recipients.map((recipient) => ({
+          recipient: recipient._id,
+          actor: req.user.id,
+          type: 'event_created',
+          message: `New event published: ${event.title}`,
+          metadata: {
+            eventId: event._id,
+            woreda: event.woreda
+          }
+        }));
+
+        const createdNotifications = await Notification.insertMany(notificationDocs);
+
+        createdNotifications.forEach((notification) => {
+          io.to(`user-${notification.recipient.toString()}`).emit('notification', {
+            id: notification._id,
+            type: notification.type,
+            message: notification.message,
+            read: notification.read,
+            createdAt: notification.createdAt,
+            metadata: notification.metadata
+          });
+        });
+      }
+    }
+
     res.status(201).json({
       success: true,
       data: event
@@ -134,7 +182,7 @@ exports.updateEvent = async (req, res, next) => {
       return next(new ErrorResponse('Event not found', 404));
     }
 
-    if (event.organizer.toString() !== req.user.id && req.user.role !== 'subcity_admin') {
+    if (event.organizer.toString() !== req.user.id) {
       return next(new ErrorResponse('Not authorized to update this event', 403));
     }
 
@@ -168,7 +216,7 @@ exports.deleteEvent = async (req, res, next) => {
       return next(new ErrorResponse('Event not found', 404));
     }
 
-    if (event.organizer.toString() !== req.user.id && req.user.role !== 'subcity_admin') {
+    if (event.organizer.toString() !== req.user.id) {
       return next(new ErrorResponse('Not authorized to delete this event', 403));
     }
 
@@ -189,7 +237,11 @@ exports.deleteEvent = async (req, res, next) => {
 exports.getEventsByWoreda = async (req, res, next) => {
   try {
     const woredaRegex = buildWoredaRegex(req.params.woreda);
-    const events = await Event.find(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.params.woreda })
+    const woredaFilter = woredaRegex
+      ? { $or: [{ woreda: { $regex: woredaRegex } }, { woreda: 'All Woredas' }] }
+      : { $or: [{ woreda: req.params.woreda }, { woreda: 'All Woredas' }] };
+
+    const events = await Event.find(woredaFilter)
       .populate('organizer', 'fullName email role')
       .sort('-createdAt');
 

@@ -61,9 +61,9 @@ const AnalyticsDashboard = () => {
   };
 
   const StatCard = ({ title, value, icon: Icon, trend, color }) => (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6">
       <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
+        <div className={`p-3 rounded-xl ${color} bg-opacity-10`}>
           <Icon className={`h-6 w-6 ${color}`} />
         </div>
         <div className="ml-4">
@@ -91,7 +91,7 @@ const AnalyticsDashboard = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      <div className="rounded-2xl border border-primary-100 bg-gradient-to-r from-white via-primary-50 to-sky-50 p-6 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
           <p className="text-gray-600">Monitor system performance and community engagement</p>
@@ -101,7 +101,7 @@ const AnalyticsDashboard = () => {
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="daily">Today</option>
             <option value="weekly">This Week</option>
@@ -112,7 +112,7 @@ const AnalyticsDashboard = () => {
           <select
             value={selectedWoreda}
             onChange={(e) => setSelectedWoreda(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="all">All Woredas</option>
             <option value="woreda1">Woreda 1</option>
@@ -122,7 +122,7 @@ const AnalyticsDashboard = () => {
           
           <button
             onClick={fetchAnalytics}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700"
+            className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary-700"
           >
             Refresh
           </button>
@@ -159,7 +159,7 @@ const AnalyticsDashboard = () => {
 
       {/* Real-time Stats */}
       {realtimeData && (
-        <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-sky-500 rounded-2xl p-6 text-white shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Real-time Activity</h3>
             <div className="flex items-center space-x-2">
@@ -191,7 +191,7 @@ const AnalyticsDashboard = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Reports by Category */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <h3 className="text-lg font-semibold mb-4">Reports by Category</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={analytics?.reportsByCategory}>
@@ -205,7 +205,7 @@ const AnalyticsDashboard = () => {
         </div>
 
         {/* Resolution Trend */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <h3 className="text-lg font-semibold mb-4">Resolution Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={analytics?.trendData}>
@@ -220,7 +220,7 @@ const AnalyticsDashboard = () => {
         </div>
 
         {/* Woreda Performance */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <h3 className="text-lg font-semibold mb-4">Woreda Performance</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={analytics?.woredaPerformance}>
@@ -236,7 +236,7 @@ const AnalyticsDashboard = () => {
         </div>
 
         {/* Department Performance */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <h3 className="text-lg font-semibold mb-4">Department Performance</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -261,8 +261,8 @@ const AnalyticsDashboard = () => {
       </div>
 
       {/* Recent Reports Table */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50/70 rounded-t-2xl">
           <h3 className="text-lg font-semibold">Recent Reports</h3>
         </div>
         <div className="overflow-x-auto">
