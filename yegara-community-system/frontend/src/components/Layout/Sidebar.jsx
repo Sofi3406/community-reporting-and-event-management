@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { analyticsAPI } from '../../services/api';
 import {
   HomeIcon,
   DocumentTextIcon,
@@ -156,15 +157,61 @@ const WoredaAdminSidebar = ({ onLogout }) => {
 };
 
 const SubCityAdminSidebar = ({ onLogout }) => {
+  const [systemStatus, setSystemStatus] = useState({
+    uptime: 0,
+    activeUsers: 0,
+    reportsToday: 0
+  });
+
+  const formatUptime = (seconds) => {
+    if (!seconds || Number.isNaN(Number(seconds))) return '0m';
+
+    const totalSeconds = Math.floor(Number(seconds));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchRealtimeStatus = async () => {
+      try {
+        const response = await analyticsAPI.getRealtime();
+        const data = response.data?.data || {};
+
+        if (isMounted) {
+          setSystemStatus({
+            uptime: data.uptime || 0,
+            activeUsers: data.activeUsers || 0,
+            reportsToday: data.reportsToday || 0
+          });
+        }
+      } catch (error) {
+        // Keep defaults if realtime fetch fails.
+      }
+    };
+
+    fetchRealtimeStatus();
+    const interval = setInterval(fetchRealtimeStatus, 30000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const links = [
     { to: '/subcity-admin/dashboard', icon: HomeIcon, label: 'Analytics Dashboard' },
     { to: '/subcity-admin/reports', icon: DocumentTextIcon, label: 'All Reports' },
     { to: '/subcity-admin/admins', icon: UserGroupIcon, label: 'Manage Woreda Admins' },
-    { to: '/subcity-admin/analytics', icon: ChartBarIcon, label: 'Advanced Analytics' },
     { to: '/subcity-admin/users', icon: UserGroupIcon, label: 'User Management' },
     { to: '/subcity-admin/announcements', icon: DocumentTextIcon, label: 'Announcements' },
     { to: '/subcity-admin/system', icon: CogIcon, label: 'System Settings' },
-    { to: '/subcity-admin/export', icon: DocumentArrowUpIcon, label: 'Export Data' },
     { to: '/profile/edit', icon: UserCircleIcon, label: 'Edit Profile' }
   ];
 
@@ -209,15 +256,15 @@ const SubCityAdminSidebar = ({ onLogout }) => {
         <div className="space-y-1 text-xs">
           <div className="flex justify-between">
             <span>Uptime</span>
-            <span className="text-green-300">99.9%</span>
+            <span className="text-green-300">{formatUptime(systemStatus.uptime)}</span>
           </div>
           <div className="flex justify-between">
             <span>Active Users</span>
-            <span>1,234</span>
+            <span>{systemStatus.activeUsers.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Reports Today</span>
-            <span>45</span>
+            <span>{systemStatus.reportsToday.toLocaleString()}</span>
           </div>
         </div>
       </div>

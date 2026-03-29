@@ -135,28 +135,24 @@ const AnalyticsDashboard = () => {
           title="Total Reports"
           value={analytics?.summary?.totalReports || 0}
           icon={DocumentTextIcon}
-          trend="+12%"
           color="text-blue-600"
         />
         <StatCard
           title="Resolution Rate"
           value={`${analytics?.summary?.resolutionRate || 0}%`}
           icon={ChartBarIcon}
-          trend="+5%"
           color="text-green-600"
         />
         <StatCard
-          title="Active Users"
-          value={analytics?.summary?.activeUsers || 0}
+          title="Total Users"
+          value={analytics?.summary?.totalUsers || 0}
           icon={UsersIcon}
-          trend="+8%"
           color="text-purple-600"
         />
         <StatCard
           title="Avg. Resolution"
           value={`${analytics?.summary?.averageResolutionDays || 0} days`}
           icon={ClockIcon}
-          trend="-2 days"
           color="text-orange-600"
         />
       </div>

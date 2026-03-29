@@ -17,7 +17,7 @@ exports.getEvents = async (req, res, next) => {
     let queryStr = JSON.stringify(reqQuery);
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
 
-    query = Event.find(JSON.parse(queryStr)).populate('organizer', 'fullName email');
+    query = Event.find(JSON.parse(queryStr)).populate('organizer', 'fullName email role');
 
     // Select fields
     if (req.query.select) {
@@ -77,7 +77,7 @@ exports.getEvents = async (req, res, next) => {
 exports.getEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id)
-      .populate('organizer', 'fullName email')
+      .populate('organizer', 'fullName email role')
       .populate('attendees', 'fullName email');
 
     if (!event) {
@@ -99,6 +99,10 @@ exports.getEvent = async (req, res, next) => {
 exports.createEvent = async (req, res, next) => {
   try {
     req.body.organizer = req.user.id;
+
+    if (req.user.role === 'subcity_admin' && !req.body.woreda) {
+      req.body.woreda = 'All Woredas';
+    }
 
     if (!req.body.woreda && req.user.woreda) {
       req.body.woreda = req.user.woreda;
@@ -186,7 +190,7 @@ exports.getEventsByWoreda = async (req, res, next) => {
   try {
     const woredaRegex = buildWoredaRegex(req.params.woreda);
     const events = await Event.find(woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.params.woreda })
-      .populate('organizer', 'fullName email')
+      .populate('organizer', 'fullName email role')
       .sort('-createdAt');
 
     res.status(200).json({

@@ -173,7 +173,8 @@ exports.getAnalytics = async (req, res, next) => {
     const resolvedReports = reportsByStatus.find(s => s._id === 'Resolved')?.count || 0;
     const resolutionRate = totalReports > 0 ? (resolvedReports / totalReports) * 100 : 0;
     
-    // Get active users
+    // Get user counts
+    const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ 
       isActive: true,
       lastLogin: { $gte: dateRange.start }
@@ -192,7 +193,7 @@ exports.getAnalytics = async (req, res, next) => {
         }))
       },
       userAnalytics: {
-        totalUsers: userStats.reduce((sum, role) => sum + role.count, 0),
+        totalUsers,
         activeUsers,
         roleDistribution: userStats.reduce((dist, role) => ({
           ...dist,
@@ -219,6 +220,7 @@ exports.getAnalytics = async (req, res, next) => {
           totalReports,
           resolvedReports,
           resolutionRate: Math.round(resolutionRate * 100) / 100,
+          totalUsers,
           activeUsers,
           averageResolutionDays: 0
         },
@@ -254,12 +256,14 @@ exports.getRealtimeData = async (req, res, next) => {
       reportsLastHour,
       reportsToday,
       activeUsersToday,
+      activeUsers,
       pendingReports,
       recentActivities
     ] = await Promise.all([
       Report.countDocuments({ createdAt: { $gte: oneHourAgo } }),
       Report.countDocuments({ createdAt: { $gte: today } }),
       User.countDocuments({ lastLogin: { $gte: today } }),
+      User.countDocuments({ isActive: true }),
       Report.countDocuments({ status: 'Pending' }),
       Report.find()
         .populate('residentId', 'fullName')
@@ -274,7 +278,9 @@ exports.getRealtimeData = async (req, res, next) => {
         reportsLastHour,
         reportsToday,
         activeUsersToday,
+        activeUsers,
         pendingReports,
+        uptime: process.uptime(),
         recentActivities,
         timestamp: new Date()
       }

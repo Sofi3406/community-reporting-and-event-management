@@ -37,9 +37,11 @@ import WoredaAdminAnalytics from './pages/WoredaAdmin/Analytics';
 
 // Sub-City Admin Pages
 import AnalyticsDashboard from './pages/SubCityAdmin/AnalyticsDashboard';
+import SubCityAdminEvents from './pages/SubCityAdmin/ManageEvents';
+import ManageWoredaAdmins from './pages/SubCityAdmin/ManageWoredaAdmins';
+import SubCityAdminReports from './pages/SubCityAdmin/Reports';
 import UserManagement from './pages/SubCityAdmin/UserManagement';
 import SystemSettings from './pages/SubCityAdmin/SystemSettings';
-import ExportData from './pages/SubCityAdmin/ExportData';
 
 // Shared Pages
 import Events from './pages/Shared/Events';
@@ -180,12 +182,12 @@ function App() {
                 <Layout>
                   <Routes>
                     <Route path="dashboard" element={<AnalyticsDashboard />} />
-                    <Route path="admins" element={<UserManagement />} />
-                    <Route path="analytics" element={<AnalyticsDashboard />} />
+                    <Route path="reports" element={<SubCityAdminReports />} />
+                    <Route path="events" element={<SubCityAdminEvents />} />
+                    <Route path="admins" element={<ManageWoredaAdmins />} />
                     <Route path="users" element={<UserManagement />} />
                     <Route path="announcements" element={<OfficerAnnouncements />} />
                     <Route path="system" element={<SystemSettings />} />
-                    <Route path="export" element={<ExportData />} />
                     <Route path="profile" element={<Profile />} />
                   </Routes>
                 </Layout>

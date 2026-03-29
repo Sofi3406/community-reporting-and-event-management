@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { io } from 'socket.io-client';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -11,8 +12,14 @@ import {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const profileMenuRef = useRef(null);
+  const notificationMenuRef = useRef(null);
+  const socketRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -36,6 +43,81 @@ const Navbar = () => {
     }
   };
 
+  const isAdminUser = user?.role === 'woreda_admin' || user?.role === 'subcity_admin';
+
+  const getEventsLink = () => {
+    if (!user) return '/events';
+
+    if (user.role === 'subcity_admin') {
+      return '/subcity-admin/events';
+    }
+
+    if (user.role === 'woreda_admin') {
+      return '/woreda-admin/events';
+    }
+
+    return '/events';
+  };
+
+  const unreadCount = notifications.filter((item) => !item.read).length;
+
+  const socketUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      withCredentials: true
+    });
+
+    socketRef.current = socket;
+    socket.emit('join', user._id);
+
+    socket.on('notification', (payload) => {
+      const notification = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        type: payload?.type || 'update',
+        message: payload?.message || 'You have a new notification.',
+        timestamp: new Date().toISOString(),
+        read: false
+      };
+
+      setNotifications((prev) => [notification, ...prev].slice(0, 20));
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [user?._id, socketUrl]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+
+      if (notificationMenuRef.current && !notificationMenuRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const toggleNotifications = () => {
+    setIsNotificationsOpen((prev) => !prev);
+    setIsProfileMenuOpen(false);
+    setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+  };
+
+  const toggleProfileMenu = () => {
+    setIsProfileMenuOpen((prev) => !prev);
+    setIsNotificationsOpen(false);
+  };
+
   return (
     <nav className="bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,12 +131,14 @@ const Navbar = () => {
             </Link>
             
             <div className="hidden md:ml-6 md:flex md:space-x-8">
-              <Link
-                to="/"
-                className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Home
-              </Link>
+              {!isAdminUser && (
+                <Link
+                  to="/"
+                  className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Home
+                </Link>
+              )}
               
               {user && (
                 <Link
@@ -66,38 +150,67 @@ const Navbar = () => {
               )}
               
               <Link
-                to="/events"
+                to={getEventsLink()}
                 className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Events
               </Link>
-              
-              <Link
-                to="/resources"
-                className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Resources
-              </Link>
+
+              {!isAdminUser && (
+                <Link
+                  to="/resources"
+                  className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Resources
+                </Link>
+              )}
             </div>
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <button className="relative p-1">
-                  <BellIcon className="h-6 w-6 text-gray-600" />
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
-                </button>
-                
-                <div className="relative group">
-                  <button className="flex items-center space-x-2">
+                <div className="relative" ref={notificationMenuRef}>
+                  <button className="relative p-1" onClick={toggleNotifications}>
+                    <BellIcon className="h-6 w-6 text-gray-600" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-semibold">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {isNotificationsOpen && (
+                    <div className="absolute right-0 mt-2 w-80 max-h-80 overflow-y-auto bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200">
+                      <div className="px-4 pb-2 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-800">Notifications</p>
+                      </div>
+
+                      {notifications.length === 0 ? (
+                        <p className="px-4 py-4 text-sm text-gray-600">No new notifications.</p>
+                      ) : (
+                        notifications.map((item) => (
+                          <div key={item.id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50">
+                            <p className="text-sm text-gray-800">{item.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">{new Date(item.timestamp).toLocaleString()}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative" ref={profileMenuRef}>
+                  <button className="flex items-center space-x-2" onClick={toggleProfileMenu}>
                     <UserCircleIcon className="h-8 w-8 text-gray-600" />
                     <span className="text-sm font-medium">{user.fullName}</span>
                   </button>
-                  
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
+
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <Link
                       to="/profile"
+                      onClick={() => setIsProfileMenuOpen(false)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Profile
@@ -108,7 +221,8 @@ const Navbar = () => {
                     >
                       Logout
                     </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -148,12 +262,14 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link
-              to="/"
-              className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Home
-            </Link>
+            {!isAdminUser && (
+              <Link
+                to="/"
+                className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Home
+              </Link>
+            )}
             
             {user && (
               <Link
@@ -165,18 +281,20 @@ const Navbar = () => {
             )}
             
             <Link
-              to="/events"
+              to={getEventsLink()}
               className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
             >
               Events
             </Link>
-            
-            <Link
-              to="/resources"
-              className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Resources
-            </Link>
+
+            {!isAdminUser && (
+              <Link
+                to="/resources"
+                className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Resources
+              </Link>
+            )}
             
             {user ? (
               <>
