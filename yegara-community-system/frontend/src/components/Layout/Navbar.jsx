@@ -7,8 +7,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   UserCircleIcon,
-  BellIcon,
-  HomeIcon
+  BellIcon
 } from '@heroicons/react/24/outline';
 
 const Navbar = () => {
@@ -199,7 +198,11 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <HomeIcon className="h-8 w-8 text-primary-600" />
+              <img
+                src={`${process.env.PUBLIC_URL}/yegara.png`}
+                alt="Yegara logo"
+                className="h-14 w-14 object-contain rounded-md bg-white p-0.5 shadow-sm"
+              />
               <span className="ml-2 text-xl font-bold text-gray-900">
                 Yegara Community
               </span>

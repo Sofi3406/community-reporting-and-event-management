@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // Layout Components
 import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
+import Footer from './components/Layout/Footer';
 
 // Auth Pages
 import Login from './pages/Auth/Login';
@@ -90,6 +91,7 @@ const Layout = ({ children }) => {
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
+        <Footer />
       </div>
     </div>
   );
