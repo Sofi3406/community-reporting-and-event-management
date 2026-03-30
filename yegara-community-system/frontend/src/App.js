@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -78,6 +79,32 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 // Layout Component
 const Layout = ({ children }) => {
   const { user } = useAuth();
+  const location = useLocation();
+
+  const compactFooterPrefixes = [
+    '/resident',
+    '/officer',
+    '/woreda-admin',
+    '/subcity-admin',
+  ];
+
+  const compactFooterRoles = new Set([
+    'resident',
+    'officer',
+    'woreda_admin',
+    'subcity_admin',
+  ]);
+
+  const compactSharedRoutes = new Set(['/profile', '/profile/edit']);
+
+  const isRoleSectionRoute = compactFooterPrefixes.some((prefix) =>
+    location.pathname === prefix || location.pathname.startsWith(`${prefix}/`)
+  );
+
+  const isCompactSharedRouteForRole =
+    compactFooterRoles.has(user?.role) && compactSharedRoutes.has(location.pathname);
+
+  const useCompactFooter = isRoleSectionRoute || isCompactSharedRouteForRole;
 
   if (!user) {
     return children;
@@ -88,10 +115,10 @@ const Layout = ({ children }) => {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className={`flex-1 overflow-y-auto p-6 ${useCompactFooter ? 'pb-2' : ''}`}>
           {children}
         </main>
-        <Footer />
+        <Footer compact={useCompactFooter} />
       </div>
     </div>
   );
