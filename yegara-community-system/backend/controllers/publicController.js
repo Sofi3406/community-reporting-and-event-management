@@ -1,6 +1,10 @@
 const Report = require('../models/Report');
 const Event = require('../models/Event');
 const Resource = require('../models/Resource');
+const {
+  askPublicChatbot,
+  UNAVAILABLE_RESPONSE
+} = require('../services/chatbotService');
 
 const getStartOfWeek = () => {
   const now = new Date();
@@ -51,5 +55,41 @@ exports.getLandingStats = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+};
+
+// @desc    Ask public chatbot from landing page
+// @route   POST /api/public/chatbot/ask
+// @access  Public
+exports.askLandingChatbot = async (req, res, next) => {
+  try {
+    const question = String(req.body?.question || '').trim();
+
+    if (!question) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a question'
+      });
+    }
+
+    const result = await askPublicChatbot({ question });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        question,
+        answer: result.answer,
+        source: result.source
+      }
+    });
+  } catch (err) {
+    return res.status(200).json({
+      success: true,
+      data: {
+        question: String(req.body?.question || '').trim(),
+        answer: UNAVAILABLE_RESPONSE,
+        source: 'unavailable'
+      }
+    });
   }
 };

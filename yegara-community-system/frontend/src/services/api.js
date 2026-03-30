@@ -115,6 +115,12 @@ export const notificationsAPI = {
   markAllRead: () => api.put('/notifications/read-all')
 };
 
+// Chatbot API
+export const chatbotAPI = {
+  ask: (question) => api.post('/chatbot/ask', { question }),
+  askPublic: (question) => api.post('/public/chatbot/ask', { question })
+};
+
 // Public API
 export const publicAPI = {
   getLandingStats: () => api.get('/public/landing-stats')

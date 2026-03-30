@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getLandingStats } = require('../controllers/publicController');
+const { getLandingStats, askLandingChatbot } = require('../controllers/publicController');
 
 router.get('/landing-stats', getLandingStats);
+router.post('/chatbot/ask', askLandingChatbot);
 
 module.exports = router;

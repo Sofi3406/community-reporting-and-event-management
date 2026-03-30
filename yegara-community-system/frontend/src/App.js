@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 import Footer from './components/Layout/Footer';
+import ResidentChatbotWidget from './components/Chatbot/ResidentChatbotWidget';
 
 // Auth Pages
 import Login from './pages/Auth/Login';
@@ -254,6 +255,7 @@ function App() {
           />
 
         </Routes>
+        <ResidentChatbotWidget />
       </AuthProvider>
     </Router>
   );

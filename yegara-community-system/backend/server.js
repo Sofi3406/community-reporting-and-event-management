@@ -26,6 +26,7 @@ const meetings = require('./routes/meetings');
 const announcements = require('./routes/announcements');
 const notifications = require('./routes/notifications');
 const publicRoutes = require('./routes/public');
+const chatbot = require('./routes/chatbot');
 
 // Import middleware
 const errorHandler = require('./middleware/error');
@@ -87,6 +88,7 @@ app.use('/api/meetings', meetings);
 app.use('/api/announcements', announcements);
 app.use('/api/notifications', notifications);
 app.use('/api/public', publicRoutes);
+app.use('/api/chatbot', chatbot);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -112,7 +114,8 @@ app.get('/', (req, res) => {
       meetings: '/api/meetings',
       announcements: '/api/announcements',
       notifications: '/api/notifications',
-      public: '/api/public'
+      public: '/api/public',
+      chatbot: '/api/chatbot'
     }
   });
 });
