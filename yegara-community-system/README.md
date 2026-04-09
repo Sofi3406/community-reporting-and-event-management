@@ -46,63 +46,21 @@ The system is designed for local community governance workflows:
 
 The following image assets are stored in `frontend/public` and can be used in the app or displayed here for quick reference.
 
-<table>
-	<tr>
-		<td align="center" width="33%">
-			<img src="frontend/public/resident.png" alt="Resident dashboard" width="100%" />
-			<br />Resident dashboard
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/officer_dashboard.png" alt="Officer dashboard" width="100%" />
-			<br />Officer dashboard
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/woreda_dashboard.png" alt="Woreda dashboard" width="100%" />
-			<br />Woreda dashboard
-		</td>
-	</tr>
-	<tr>
-		<td align="center" width="33%">
-			<img src="frontend/public/sub_city_dashboard.png" alt="Sub city dashboard" width="100%" />
-			<br />Sub city dashboard
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/sub_city_dashboard2.png" alt="Sub city dashboard 2" width="100%" />
-			<br />Sub city dashboard 2
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/sub_city_dashboard3.png" alt="Sub city dashboard 3" width="100%" />
-			<br />Sub city dashboard 3
-		</td>
-	</tr>
-	<tr>
-		<td align="center" width="33%">
-			<img src="frontend/public/yegara.png" alt="Yegara logo" width="100%" />
-			<br />Yegara logo
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/Addis%20Ababa.jpg" alt="Addis Ababa" width="100%" />
-			<br />Addis Ababa
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/logo192.png" alt="App icon 192" width="100%" />
-			<br />App icon 192
-		</td>
-	</tr>
-	<tr>
-		<td align="center" width="33%">
-			<img src="frontend/public/logo512.png" alt="App icon 512" width="100%" />
-			<br />App icon 512
-		</td>
-		<td align="center" width="33%">
-			<img src="frontend/public/favicon.ico" alt="Favicon" width="64" />
-			<br />Favicon
-		</td>
-		<td align="center" width="33%">
-      
-		</td>
-	</tr>
-</table>
+| Resident Dashboard | Officer Dashboard | Woreda Dashboard |
+|---|---|---|
+| <img src="frontend/public/resident.png" alt="Resident dashboard" width="300" /> | <img src="frontend/public/officer_dashboard.png" alt="Officer dashboard" width="300" /> | <img src="frontend/public/woreda_dashboard.png" alt="Woreda dashboard" width="300" /> |
+
+| Sub City Dashboard | Sub City Dashboard 2 | Sub City Dashboard 3 |
+|---|---|---|
+| <img src="frontend/public/sub_city_dashboard.png" alt="Sub city dashboard" width="300" /> | <img src="frontend/public/sub_city_dashboard2.png" alt="Sub city dashboard 2" width="300" /> | <img src="frontend/public/sub_city_dashboard3.png" alt="Sub city dashboard 3" width="300" /> |
+
+| Yegara Logo | Addis Ababa | App Icon 192 |
+|---|---|---|
+| <img src="frontend/public/yegara.png" alt="Yegara logo" width="220" /> | <img src="frontend/public/Addis%20Ababa.jpg" alt="Addis Ababa" width="300" /> | <img src="frontend/public/logo192.png" alt="App icon 192" width="180" /> |
+
+| App Icon 512 | Favicon | |
+|---|---|---|
+| <img src="frontend/public/logo512.png" alt="App icon 512" width="200" /> | <img src="frontend/public/favicon.ico" alt="Favicon" width="64" /> | |
 
 ## Tech Stack
 
