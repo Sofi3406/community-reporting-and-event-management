@@ -84,11 +84,27 @@ const Navbar = () => {
     }
   };
 
+  const getHomeLink = () => {
+    if (user?.role === 'resident') {
+      return '/resident/dashboard';
+    }
+
+    return '/';
+  };
+
   const isAdminUser = user?.role === 'woreda_admin' || user?.role === 'subcity_admin';
   const isOfficerUser = user?.role === 'officer';
 
   const getEventsLink = () => {
     if (!user) return '/events';
+
+    if (user.role === 'resident') {
+      return '/resident/events';
+    }
+
+    if (user.role === 'officer') {
+      return '/officer/events';
+    }
 
     if (user.role === 'subcity_admin') {
       return '/subcity-admin/events';
@@ -99,6 +115,16 @@ const Navbar = () => {
     }
 
     return '/events';
+  };
+
+  const getResourcesLink = () => {
+    if (!user) return '/resources';
+
+    if (user.role === 'resident') {
+      return '/resident/resources';
+    }
+
+    return '/resources';
   };
 
   const unreadCount = notifications.filter((item) => !item.read).length;
@@ -211,7 +237,7 @@ const Navbar = () => {
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               {!isAdminUser && (
                 <Link
-                  to="/"
+                  to={getHomeLink()}
                   className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Home
@@ -238,7 +264,7 @@ const Navbar = () => {
 
               {!isAdminUser && !isOfficerUser && (
                 <Link
-                  to="/resources"
+                  to={getResourcesLink()}
                   className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Resources
@@ -354,7 +380,7 @@ const Navbar = () => {
 
             {!isAdminUser && (
               <Link
-                to="/"
+                to={getHomeLink()}
                 className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
               >
                 Home
@@ -381,7 +407,7 @@ const Navbar = () => {
 
             {!isAdminUser && !isOfficerUser && (
               <Link
-                to="/resources"
+                to={getResourcesLink()}
                 className="text-gray-900 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
               >
                 Resources

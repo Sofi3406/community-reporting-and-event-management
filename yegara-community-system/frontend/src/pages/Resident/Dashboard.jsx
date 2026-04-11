@@ -45,7 +45,12 @@ const Dashboard = () => {
         setEvents(eventsResponse.data?.data || []);
       } catch (error) {
         if (isMounted) {
-          toast.error('Unable to load dashboard data');
+          const message =
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            'Unable to load dashboard data';
+
+          toast.error(message, { id: 'resident-dashboard-load-error' });
         }
       } finally {
         if (isMounted) {

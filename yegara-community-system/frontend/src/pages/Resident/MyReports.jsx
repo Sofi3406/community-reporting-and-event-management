@@ -20,7 +20,12 @@ const MyReports = () => {
       const response = await reportsAPI.getMyReports();
       setReports(response.data.data || []);
     } catch (error) {
-      toast.error('Unable to load reports');
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Unable to load reports';
+
+      toast.error(message, { id: 'resident-reports-load-error' });
     } finally {
       setLoading(false);
     }
