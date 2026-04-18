@@ -3,6 +3,29 @@ import { reportsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
+const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
+const getImageUrl = (imagePath) => {
+  if (!imagePath) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(imagePath)) {
+    return imagePath;
+  }
+
+  const normalizedPath = imagePath
+    .replace(/\\/g, '/')
+    .replace(/^\/+/, '')
+    .replace(/^(?:\.\/)+/, '');
+
+  if (normalizedPath.startsWith('uploads/')) {
+    return `${API_ROOT}/${normalizedPath}`;
+  }
+
+  return `${API_ROOT}/uploads/${normalizedPath}`;
+};
+
 const statusStyles = {
   Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   'In Progress': 'bg-blue-100 text-blue-800 border-blue-200',
@@ -85,6 +108,34 @@ const ManageReports = () => {
                   <p className="mt-2"><span className="font-medium text-gray-800">Resident:</span> {report.residentId?.fullName || 'Resident'}</p>
                 </div>
               </div>
+
+              {report.images?.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-800 mb-2">Supporting image{report.images.length > 1 ? 's' : ''}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {report.images.map((image, index) => {
+                      const imageUrl = getImageUrl(image);
+
+                      return (
+                        <a
+                          key={`${report._id}-image-${index}`}
+                          href={imageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="group overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`Supporting image ${index + 1} for ${report.title}`}
+                            className="h-32 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <button
                 className="mt-4 inline-flex items-center rounded-lg border border-primary-200 text-primary-700 text-sm font-medium px-3 py-1.5 hover:bg-primary-50"

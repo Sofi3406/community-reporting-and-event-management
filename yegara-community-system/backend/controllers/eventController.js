@@ -4,6 +4,8 @@ const Notification = require('../models/Notification');
 const ErrorResponse = require('../utils/errorResponse');
 const { buildWoredaRegex } = require('../utils/woreda');
 
+const toWebPath = (filePath = '') => filePath.replace(/\\/g, '/');
+
 // @desc    Get all events
 // @route   GET /api/events
 // @access  Private
@@ -111,7 +113,7 @@ exports.createEvent = async (req, res, next) => {
     }
 
     if (req.files && req.files.length > 0) {
-      req.body.images = req.files.map(file => file.path);
+      req.body.images = req.files.map(file => toWebPath(file.path));
     }
 
     const event = await Event.create(req.body);
@@ -187,7 +189,7 @@ exports.updateEvent = async (req, res, next) => {
     }
 
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => file.path);
+      const newImages = req.files.map(file => toWebPath(file.path));
       req.body.images = [...event.images, ...newImages];
     }
 

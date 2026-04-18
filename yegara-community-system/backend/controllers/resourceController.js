@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const Resource = require('../models/Resource');
 const ErrorResponse = require('../utils/errorResponse');
+
+const toWebPath = (filePath = '') => filePath.replace(/\\/g, '/');
 const { buildWoredaRegex } = require('../utils/woreda');
 
 // @desc    Get all resources
@@ -124,7 +126,7 @@ exports.createResource = async (req, res, next) => {
     }
 
     if (req.file) {
-      req.body.fileUrl = req.file.path;
+      req.body.fileUrl = toWebPath(req.file.path);
       req.body.fileName = req.file.originalname;
       req.body.fileType = req.file.mimetype;
       req.body.fileSize = req.file.size;
@@ -161,7 +163,7 @@ exports.updateResource = async (req, res, next) => {
     }
 
     if (req.file) {
-      req.body.fileUrl = req.file.path;
+      req.body.fileUrl = toWebPath(req.file.path);
       req.body.fileName = req.file.originalname;
       req.body.fileType = req.file.mimetype;
       req.body.fileSize = req.file.size;
