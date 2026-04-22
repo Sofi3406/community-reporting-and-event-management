@@ -16,8 +16,6 @@ const isOfficerAllowedForReport = (user, report) => {
   );
 };
 
-const toWebPath = (filePath = '') => filePath.replace(/\\/g, '/');
-
 // @desc    Get all reports
 // @route   GET /api/reports
 // @access  Private
@@ -169,7 +167,7 @@ exports.createReport = async (req, res, next) => {
     
     // Handle file uploads
     if (req.files && req.files.length > 0) {
-      req.body.images = req.files.map(file => toWebPath(file.path));
+      req.body.images = req.files.map(file => file.path);
     }
 
     if (req.body.location && typeof req.body.location === 'string') {
@@ -308,7 +306,7 @@ exports.updateReport = async (req, res, next) => {
     
     // Handle file uploads
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => toWebPath(file.path));
+      const newImages = req.files.map(file => file.path);
       req.body.images = [...report.images, ...newImages];
     }
     
