@@ -8,13 +8,6 @@ import {
   PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
-const SUGGESTED_PROMPTS = [
-  'How do I submit a new report?',
-  'How can I track my report status?',
-  'How can I register in the system?',
-  'What does Yegara do?'
-];
-
 const ResidentChatbotWidget = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -85,18 +78,6 @@ const ResidentChatbotWidget = () => {
     }
   };
 
-  const promptButtons = SUGGESTED_PROMPTS.map((prompt) => (
-    <button
-      key={prompt}
-      type="button"
-      onClick={() => sendQuestion(prompt)}
-      className="text-left rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-800 hover:bg-primary-100"
-      disabled={loading}
-    >
-      {prompt}
-    </button>
-  ));
-
   if (!shouldRender) return null;
 
   return (
@@ -156,8 +137,6 @@ const ResidentChatbotWidget = () => {
               Clear chat and restart
             </button>
 
-            <div className="grid grid-cols-1 gap-2">{promptButtons}</div>
-
             {!isResident && isLandingPage && (
               <button
                 type="button"
@@ -190,6 +169,9 @@ const ResidentChatbotWidget = () => {
                 <PaperAirplaneIcon className="h-4 w-4" />
               </button>
             </form>
+            <p className="text-[11px] text-gray-500">
+              Ask about reports, tracking status, registration, announcements, events, or meetings.
+            </p>
           </div>
         </div>
       )}
