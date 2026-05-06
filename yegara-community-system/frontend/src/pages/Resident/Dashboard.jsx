@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { eventsAPI, reportsAPI } from '../../services/api';
+import { announcementsAPI, eventsAPI, reportsAPI, resourcesAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
 const statusStyles = {
@@ -15,6 +15,8 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [events, setEvents] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,10 +41,17 @@ const Dashboard = () => {
           eventsAPI.getAll(eventParams)
         ]);
 
+        const [announcementsResponse, resourcesResponse] = await Promise.all([
+          announcementsAPI.getAll(),
+          resourcesAPI.getAll({ sort: '-createdAt', limit: 3 })
+        ]);
+
         if (!isMounted) return;
 
         setReports(reportsResponse.data?.data || []);
         setEvents(eventsResponse.data?.data || []);
+        setAnnouncements((announcementsResponse.data?.data || []).slice(0, 3));
+        setResources(resourcesResponse.data?.data || []);
       } catch (error) {
         if (isMounted) {
           const message =
@@ -168,6 +177,68 @@ const Dashboard = () => {
               Download resources
             </Link>
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Latest announcements</h2>
+            <Link to="/announcements" className="text-sm text-primary-600 hover:text-primary-700">
+              View all
+            </Link>
+          </div>
+          {loading ? (
+            <div className="flex justify-center items-center h-24">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="mt-4 text-gray-500 text-sm">No announcements available right now.</div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {announcements.map((item) => (
+                <div key={item._id} className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
+                    <span className="text-xs rounded-full bg-primary-50 text-primary-700 border border-primary-100 px-2 py-1">
+                      {item.category || 'General'}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-600 line-clamp-3">{item.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Recent resources</h2>
+            <Link to="/resident/resources" className="text-sm text-primary-600 hover:text-primary-700">
+              Open library
+            </Link>
+          </div>
+          {loading ? (
+            <div className="flex justify-center items-center h-24">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+          ) : resources.length === 0 ? (
+            <div className="mt-4 text-gray-500 text-sm">No resources available right now.</div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {resources.map((resource) => (
+                <div key={resource._id} className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-semibold text-gray-900 truncate">{resource.title}</h3>
+                    <span className="text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200 px-2 py-1">
+                      {resource.category || 'Other'}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-600 line-clamp-3">{resource.description || 'No description provided.'}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const Resource = require('../models/Resource');
+const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 
 const toWebPath = (filePath = '') => filePath.replace(/\\/g, '/');
 const { buildWoredaRegex } = require('../utils/woreda');
+const STAFF_RESOURCE_ROLES = ['officer', 'woreda_admin', 'subcity_admin'];
 
 // @desc    Get all resources
 // @route   GET /api/resources
@@ -24,14 +26,29 @@ exports.getResources = async (req, res, next) => {
     const baseFilter = JSON.parse(queryStr);
 
     if (req.user.role === 'resident') {
-      baseFilter.isPublic = true;
+      const staffIds = await User.find({ role: { $in: STAFF_RESOURCE_ROLES } }).distinct('_id');
+      const visibilityFilter = {
+        $or: [
+          { isPublic: true },
+          { isPublic: { $exists: false } },
+          { uploadedBy: { $in: staffIds } }
+        ]
+      };
+
       if (req.user.woreda) {
         const woredaRegex = buildWoredaRegex(req.user.woreda);
-        baseFilter.$or = [
-          woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.user.woreda },
-          { woreda: { $exists: false } },
-          { woreda: null }
+        baseFilter.$and = [
+          visibilityFilter,
+          {
+            $or: [
+              woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: req.user.woreda },
+              { woreda: { $exists: false } },
+              { woreda: null }
+            ]
+          }
         ];
+      } else {
+        Object.assign(baseFilter, visibilityFilter);
       }
     }
 
@@ -95,14 +112,18 @@ exports.getResources = async (req, res, next) => {
 exports.getResource = async (req, res, next) => {
   try {
     const resource = await Resource.findById(req.params.id)
-      .populate('uploadedBy', 'fullName email');
+      .populate('uploadedBy', 'fullName email role');
 
     if (!resource) {
       return next(new ErrorResponse('Resource not found', 404));
     }
 
-    if (req.user.role === 'resident' && resource.isPublic === false) {
-      return next(new ErrorResponse('Not authorized to access this resource', 403));
+    if (req.user.role === 'resident') {
+      const isStaffUpload = STAFF_RESOURCE_ROLES.includes(resource.uploadedBy?.role);
+
+      if (resource.isPublic === false && !isStaffUpload) {
+        return next(new ErrorResponse('Not authorized to access this resource', 403));
+      }
     }
 
     res.status(200).json({
@@ -220,8 +241,13 @@ exports.downloadResource = async (req, res, next) => {
       return next(new ErrorResponse('Resource not found', 404));
     }
 
-    if (req.user.role === 'resident' && resource.isPublic === false) {
-      return next(new ErrorResponse('Not authorized to access this resource', 403));
+    if (req.user.role === 'resident') {
+      const uploadedBy = await User.findById(resource.uploadedBy).select('role');
+      const isStaffUpload = STAFF_RESOURCE_ROLES.includes(uploadedBy?.role);
+
+      if (resource.isPublic === false && !isStaffUpload) {
+        return next(new ErrorResponse('Not authorized to access this resource', 403));
+      }
     }
 
     const filePath = path.isAbsolute(resource.fileUrl)

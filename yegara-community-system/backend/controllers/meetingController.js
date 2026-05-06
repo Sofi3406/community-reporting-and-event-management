@@ -272,7 +272,7 @@ exports.deleteMeeting = async (req, res, next) => {
       return next(new ErrorResponse('Not authorized to delete this meeting', 403));
     }
 
-    await meeting.remove();
+    await meeting.deleteOne();
 
     res.status(200).json({
       success: true,

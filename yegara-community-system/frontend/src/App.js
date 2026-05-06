@@ -97,6 +97,7 @@ const Layout = ({ children }) => {
   ]);
 
   const compactSharedRoutes = new Set(['/profile', '/profile/edit']);
+  const residentSharedRoutes = new Set(['/announcements', '/resources', '/events']);
 
   const isRoleSectionRoute = compactFooterPrefixes.some((prefix) =>
     location.pathname === prefix || location.pathname.startsWith(`${prefix}/`)
@@ -105,7 +106,10 @@ const Layout = ({ children }) => {
   const isCompactSharedRouteForRole =
     compactFooterRoles.has(user?.role) && compactSharedRoutes.has(location.pathname);
 
-  const useCompactFooter = isRoleSectionRoute || isCompactSharedRouteForRole;
+  const isResidentSharedRoute =
+    user?.role === 'resident' && residentSharedRoutes.has(location.pathname);
+
+  const useCompactFooter = isRoleSectionRoute || isCompactSharedRouteForRole || isResidentSharedRoute;
 
   if (!user) {
     return children;

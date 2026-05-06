@@ -9,7 +9,7 @@ const Announcements = () => {
     title: '',
     message: '',
     category: 'General',
-    audienceRoles: ['resident']
+    audienceRoles: ['all']
   });
 
   const fetchAnnouncements = async () => {
@@ -39,7 +39,7 @@ const Announcements = () => {
         audienceRoles: form.audienceRoles
       });
       toast.success('Announcement published');
-      setForm({ title: '', message: '', category: 'General', audienceRoles: ['resident'] });
+      setForm({ title: '', message: '', category: 'General', audienceRoles: ['all'] });
       fetchAnnouncements();
     } catch (error) {
       toast.error(error.response?.data?.error || 'Unable to publish announcement');

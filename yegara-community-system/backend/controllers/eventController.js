@@ -222,7 +222,7 @@ exports.deleteEvent = async (req, res, next) => {
       return next(new ErrorResponse('Not authorized to delete this event', 403));
     }
 
-    await event.remove();
+    await event.deleteOne();
 
     res.status(200).json({
       success: true,

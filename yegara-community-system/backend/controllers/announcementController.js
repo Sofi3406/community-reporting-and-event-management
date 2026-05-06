@@ -10,7 +10,13 @@ const resolveAudienceFilter = (user) => {
   const roles = ['all', user.role];
   const woredaRegex = buildWoredaRegex(user.woreda);
   const woredaFilter = user.woreda
-    ? { woreda: woredaRegex ? { $regex: woredaRegex } : user.woreda }
+    ? {
+        $or: [
+          woredaRegex ? { woreda: { $regex: woredaRegex } } : { woreda: user.woreda },
+          { woreda: { $exists: false } },
+          { woreda: null }
+        ]
+      }
     : {};
 
   return {
@@ -132,7 +138,7 @@ exports.deleteAnnouncement = async (req, res, next) => {
       return next(new ErrorResponse('Not authorized', 403));
     }
 
-    await announcement.remove();
+    await announcement.deleteOne();
 
     res.status(200).json({
       success: true,
